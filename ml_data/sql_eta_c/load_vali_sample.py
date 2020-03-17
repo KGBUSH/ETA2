@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
-
+"""
+注：一定要确认create_sample_data(函数是否调用)！！
+"""
 import commands
 from config import PROJECT_DATA_PATH
 from utils import load_sql_data
-from ml_data.sql_eta_c.load_data import GENERATE_TRAIN_SAMPLE_SQL, DOWNLOAD_TRAIN_DATA_TO_LOCAL
+from ml_data.sql_eta_c.load_data import GENERATE_VALI_SAMPLE_SQL, DOWNLOAD_VALI_DATA_TO_LOCAL
 import os
 
 
@@ -14,7 +16,7 @@ def create_sample_data():
     """
     date_begin = '2020-02-13'
     date_end = '2020-03-13'
-    sql_info = GENERATE_TRAIN_SAMPLE_SQL.replace('{date_begin}', date_begin) \
+    sql_info = GENERATE_VALI_SAMPLE_SQL.replace('{date_begin}', date_begin) \
         .replace('{date_end}', date_end)
     load_sql_data(sql_info)
 
@@ -29,7 +31,7 @@ def load_sample_data_157():
     os.mkdir(path_dir)
 
     # 2 download hive data
-    sql_info = DOWNLOAD_TRAIN_DATA_TO_LOCAL.format(
+    sql_info = DOWNLOAD_VALI_DATA_TO_LOCAL.format(
         local_path=path_dir
     )
     load_sql_data(sql_info)
@@ -49,5 +51,5 @@ def load_sample_data_157():
 
 
 if __name__ == '__main__':
-    create_sample_data()
+    # create_sample_data()  # 慎用！！！会删了所有表重跑.
     load_sample_data_157()
