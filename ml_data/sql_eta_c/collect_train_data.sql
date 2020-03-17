@@ -1,4 +1,4 @@
-
+-- ETA C段训练数据，python不会直接运行这个
 
 
 set mapred.max.split.size=100000000;
@@ -444,7 +444,7 @@ from
     and a.city_id = b.city_id
   );
 select
-  count(distinct order_id) as cd11,
-  count(*) as c11
+  count(distinct order_id) as cd10,
+  count(*) as c10
 from
   algo_test.dy_eta_c_10;

@@ -458,3 +458,10 @@ INSERT overwrite LOCAL directory "{local_path}" ROW format delimited fields
 terminated BY "\t" COLLECTION ITEMS TERMINATED BY "\n"
 SELECT * FROM algo_test.dy_eta_c_10;
 """
+
+DOWNLOAD_VALI_DATA_TO_LOCAL = """
+-- 下载数据到本地指定目录
+INSERT overwrite LOCAL directory "{local_path}" ROW format delimited fields 
+terminated BY "\t" COLLECTION ITEMS TERMINATED BY "\n"
+SELECT * FROM algo_test.dy_eta_c_vali_10;
+"""

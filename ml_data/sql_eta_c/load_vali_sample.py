@@ -20,8 +20,8 @@ def create_sample_data():
 
 
 def load_sample_data_157():
-    path_dir = PROJECT_DATA_PATH + "/sample_data_dir"
-    data_path = PROJECT_DATA_PATH + "/sample_data"
+    path_dir = PROJECT_DATA_PATH + "/c_vali_sample_data_dir"
+    data_path = PROJECT_DATA_PATH + "/c_vali_sample_data"
 
     # 1 hive 拉下来的数据会先存到文件夹
     cmd = "rm -rf {path}".format(path=path_dir)

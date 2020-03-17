@@ -1,4 +1,4 @@
-
+-- ETA C段validation数据，python不会直接运行这个
 
 
 set mapred.max.split.size=100000000;
@@ -235,13 +235,57 @@ from
 
 
 
+--
+-- -- 6* api_algo_poi_statistic_Info  poi统计信息，数据库要用, poi 的count要大于等于5
+-- drop table algo_test.dy_eta_c_vali_06_poi_statistics;
+-- create table algo_test.dy_eta_c_vali_06_poi_statistics as
+-- select
+--   row_number() over() as id,
+--   a.poi_id,
+--   --a.poi_name,
+--   percentile(int(a.deliver_time1), 0.5) as percentile_delivery_time_poi,
+--   -- 这个楼的历史平均交付时间，下面会做达达的交付时间
+--   round(avg(a.deliver_time1), 1) as avg_delivery_time_poi,
+--   percentile(int(a.distance), 0.5) as percentile_distance_poi,
+--   stddev(a.distance) as std_distance_poi,
+--   stddev(a.deliver_time1) as std_delivery_time_poi,
+--   --加入方差
+--   -- 这个poi周围的收货人的平均收货时间
+--   count(a.order_id) as order_cnt,
+--   --这个poi周围有多少订单
+--   a.city_id,
+--   a.poi_lat,
+--   a.poi_lng,
+--   from_unixtime(
+--     cast(current_timestamp() AS BIGINT),
+--     --当前时间
+--     'yyyy-MM-dd HH:mm:ss'
+--   ) AS create_time,
+--   from_unixtime(
+--     cast(current_timestamp() AS BIGINT),
+--     'yyyy-MM-dd HH:mm:ss'
+--   ) AS update_time
+-- from
+--   algo_test.dy_eta_c_vali_05 a
+-- group by
+--   a.poi_id,
+--   --a.poi_name,
+--   --和这个poi有关的订单group
+--   a.city_id,
+--   a.poi_lat,
+--   a.poi_lng
+-- having order_cnt >= 5;
+--
+--
 
---6 计算 POI 级别均值、中位数等服务时效，****放开distance的限制***
+
+
+--7 计算 POI 级别均值、中位数等服务时效，****放开distance的限制***
 -- key 加入 poi的经纬度
 -- 加入方差，transporter_id等数据
 -- 加入supplier_id，s_r直线距离
-drop table algo_test.dy_eta_c_vali_06;
-create table algo_test.dy_eta_c_vali_06 as
+drop table algo_test.dy_eta_c_vali_07;
+create table algo_test.dy_eta_c_vali_07 as
 select
   A.order_id,
   A.supplier_id,
@@ -258,13 +302,13 @@ select
   A.r_lng,
   A.r_lat,
   B.poi_id,
-  B.poi_name,
+  --B.poi_name,
   B.poi_lat,
   B.poi_lng,
   A.is_hard_poi,
   A.difficulty,
   A.distance as receiver_poi_distance,  --当前收货人到poi距离
-  B.percentile_deliver_time_poi,  --下面三个都是poi的历史数据
+  B.percentile_delivery_time_poi,  --下面三个都是poi的历史数据
   B.avg_delivery_time_poi,
   B.percentile_distance_poi,
   B.std_distance_poi,
@@ -273,8 +317,8 @@ select
   B.city_id,
   A.deliver_time1,
   A.deliver_time2,
-  abs(B.percentile_deliver_time_poi - A.deliver_time1) as error1,  -- POI中位统计时间
-  abs(B.percentile_deliver_time_poi - A.deliver_time2) as error2
+  abs(B.percentile_delivery_time_poi - A.deliver_time1) as error1,  -- POI中位统计时间
+  abs(B.percentile_delivery_time_poi - A.deliver_time2) as error2
 from
   (
     select
@@ -282,94 +326,27 @@ from
     from
       algo_test.dy_eta_c_vali_05 a
   ) A
-  join (
-    select
-      a.poi_id,
-      a.poi_name,
-      percentile(int(a.deliver_time1), 0.5) as percentile_deliver_time_poi,  -- 这个楼的历史平均交付时间，下面会做达达的交付时间
-      round(avg(a.deliver_time1), 1) as avg_delivery_time_poi,
-      percentile(int(a.distance), 0.5) as percentile_distance_poi,
-      stddev(a.distance) as std_distance_poi,
-      stddev(a.deliver_time1) as std_delivery_time_poi,  --加入方差
-      -- 这个poi周围的收货人的平均收货时间
-      count(a.order_id) as order_cnt,
-      --这个poi周围有多少订单
-      a.city_id,
-      a.poi_lat,
-      a.poi_lng
-    from
-      algo_test.dy_eta_c_vali_05 a
-    group by
-      a.poi_id,
-      a.poi_name,
-      --和这个poi有关的订单group
-      a.city_id,
-      a.poi_lat,
-      a.poi_lng
-  ) B on (
+  join algo_test.dy_eta_c_06_poi_statistics as B on (  -- 上面做的统计表
     A.poi_id = B.poi_id
-    and A.poi_name = B.poi_name
+    --and A.poi_name = B.poi_name
     and A.city_id = B.city_id
     and A.poi_lat = B.poi_lat
     and A.poi_lng = B.poi_lng
-  )
-where
-  B.order_cnt >= 5;
-
-
-
--- 7* api_algo_poi_statistic_Info  poi统计信息，数据库要用
-drop table algo_test.dy_eta_c_07_poi_statistics;
-create table algo_test.dy_eta_c_07_poi_statistics as
-select
-  row_number() over() as id,
-  a.poi_id,
-  --a.poi_name,
-  percentile(int(a.deliver_time1), 0.5) as percentile_delivery_time_poi,
-  -- 这个楼的历史平均交付时间，下面会做达达的交付时间
-  round(avg(a.deliver_time1), 1) as avg_delivery_time_poi,
-  percentile(int(a.distance), 0.5) as percentile_distance_poi,
-  stddev(a.distance) as std_distance_poi,
-  stddev(a.deliver_time1) as std_delivery_time_poi,
-  --加入方差
-  -- 这个poi周围的收货人的平均收货时间
-  count(a.order_id) as order_cnt,
-  --这个poi周围有多少订单
-  a.city_id,
-  a.poi_lat,
-  a.poi_lng,
-  from_unixtime(
-    cast(current_timestamp() AS BIGINT),
-    --当前时间
-    'yyyy-MM-dd HH:mm:ss'
-  ) AS create_time,
-  from_unixtime(
-    cast(current_timestamp() AS BIGINT),
-    'yyyy-MM-dd HH:mm:ss'
-  ) AS update_time
-from
-  algo_test.dy_eta_c_05 a
-group by
-  a.poi_id,
-  --a.poi_name,
-  --和这个poi有关的订单group
-  a.city_id,
-  a.poi_lat,
-  a.poi_lng;
+  );
 
 
 
 
 --8. 把transporter的信息合入进来，做到algo_db中, 最后又转存到algo_test
-drop table algo_test.dy_eta_c_08;
-create table algo_test.dy_eta_c_08 as
+drop table algo_test.dy_eta_c_vali_08;
+create table algo_test.dy_eta_c_vali_08 as
 select
   bef.*,
   T.history_order_num as t_history_order_num,
   T.avg_a1_time as t_avg_a1_time,
   T.avg_a2_time as t_avg_a2_time
 from
-  algo_test.dy_eta_c_06 as bef
+  algo_test.dy_eta_c_vali_07 as bef
   inner join algo_test.dy_transporter_history_delivery_city0_filter as T on (
     bef.transporter_id = T.transporter_id
     and bef.city_id = T.city_id
@@ -377,78 +354,74 @@ from
 
 
 
-
--- 9 presto 运行，对 7中的达达做平均交付时间统计, 又加上了各时间阶段阶段
-drop table algo_test.dy_eta_c_09;
-create table algo_test.dy_eta_c_09 AS
-select
-  a.transporter_id,
-  a.city_id,
-  count(1) as delivery_cnt,
-  --好像其他地方也有历史订单的统计，这个是交付成功（又进过圈）的样本数量
-  cast(avg(deliver_time1) as int) as avg_delivery_time1,
-  cast(avg(deliver_time2) as int) as avg_delivery_time2,
-  percentile(deliver_time1, 0.5) as per_delivery_time1,
-  percentile(deliver_time2, 0.5) as per_delivery_time2,
-
-  count(case when peek_time = 1 then 1 end) as cnt_peek1, -- 统计高峰阶段的订单量, 午餐晚餐
-  count(case when peek_time = 2 then 1 end) as cnt_peek2, -- 统计高峰之间的闲时阶段的订单量
-  count(case when peek_time = 3 then 1 end) as cnt_peek3, -- 统计半夜到清晨阶段的订单量
-  count(case when peek_time = 0 then 1 end) as cnt_peek0, -- 统计其他阶段的订单量
-
-  percentile((case when peek_time = 1 then deliver_time1 end), 0.5) as per_delivery_time1_peek1,
-  percentile((case when peek_time = 2 then deliver_time1 end), 0.5) as per_delivery_time1_peek2,
-  percentile((case when peek_time = 3 then deliver_time1 end), 0.5) as per_delivery_time1_peek3,
-  percentile((case when peek_time = 0 then deliver_time1 end), 0.5) as per_delivery_time1_peek0
-
-from
-  (
-    select
-      tmp1.*,
-      case
-        when ((finish_hour >= 11 and finish_hour < 13) or (finish_hour >= 18 and finish_hour < 20)) then 1
-        when ((finish_hour >= 9 and finish_hour < 11) or (finish_hour >= 15 and finish_hour < 17)  or (finish_hour >= 20 and finish_hour < 22)) then 2
-        when (finish_hour < 9 or finish_hour >= 23) then 3  --半夜
-        else 0
-      end as peek_time
-    from
-      (
-        select
-          tmp.*,
-          hour(finish_time) as finish_hour
-        from
-          algo_test.dy_eta_c_08 as tmp
-      ) as tmp1
-  ) a
-group by
-  transporter_id,
-  city_id;
-
-
--- 10 上面数据要加id time才能进线上的dw_api  已经移到了algo_test
-drop table algo_test.dy_eta_c_10_peek;
-create table algo_test.dy_eta_c_10_peek as
-select
-  row_number() over() as id,
-  -- 自增
-  a.*,
-  from_unixtime(
-    cast(current_timestamp() AS BIGINT),
-    --当前时间
-    'yyyy-MM-dd HH:mm:ss'
-  ) AS create_time,
-  from_unixtime(
-    cast(current_timestamp() AS BIGINT),
-    'yyyy-MM-dd HH:mm:ss'
-  ) AS update_time
-from
-  algo_test.dy_eta_c_09 as a
+--
+-- -- 9 hive 运行，对达达做peek平均交付时间统计, 又加上了各时间阶段阶段  数据库
+-- drop table algo_test.dy_eta_c_vali_09_peek;
+-- create table algo_test.dy_eta_c_vali_09_peek AS
+-- select
+--   row_number() over() as id,
+--   -- 自增
+--   a.*,
+--   from_unixtime(
+--     cast(current_timestamp() AS BIGINT),
+--     --当前时间
+--     'yyyy-MM-dd HH:mm:ss'
+--   ) AS create_time,
+--   from_unixtime(
+--     cast(current_timestamp() AS BIGINT),
+--     'yyyy-MM-dd HH:mm:ss'
+--   ) AS update_time
+-- from (
+--     select
+--       a.transporter_id,
+--       a.city_id,
+--       count(1) as delivery_cnt,
+--       --好像其他地方也有历史订单的统计，这个是交付成功（又进过圈）的样本数量
+--       cast(avg(deliver_time1) as int) as avg_delivery_time1,
+--       cast(avg(deliver_time2) as int) as avg_delivery_time2,
+--       percentile(deliver_time1, 0.5) as per_delivery_time1,
+--       percentile(deliver_time2, 0.5) as per_delivery_time2,
+--
+--       count(case when peek_time = 1 then 1 end) as cnt_peek1, -- 统计高峰阶段的订单量, 午餐晚餐
+--       count(case when peek_time = 2 then 1 end) as cnt_peek2, -- 统计高峰之间的闲时阶段的订单量
+--       count(case when peek_time = 3 then 1 end) as cnt_peek3, -- 统计半夜到清晨阶段的订单量
+--       count(case when peek_time = 0 then 1 end) as cnt_peek0, -- 统计其他阶段的订单量
+--
+--       percentile((case when peek_time = 1 then deliver_time1 end), 0.5) as per_delivery_time1_peek1,
+--       percentile((case when peek_time = 2 then deliver_time1 end), 0.5) as per_delivery_time1_peek2,
+--       percentile((case when peek_time = 3 then deliver_time1 end), 0.5) as per_delivery_time1_peek3,
+--       percentile((case when peek_time = 0 then deliver_time1 end), 0.5) as per_delivery_time1_peek0
+--
+--     from
+--       (
+--         select
+--           tmp1.*,
+--           case
+--             when ((finish_hour >= 11 and finish_hour < 13) or (finish_hour >= 18 and finish_hour < 20)) then 1
+--             when ((finish_hour >= 9 and finish_hour < 11) or (finish_hour >= 15 and finish_hour < 17)  or (finish_hour >= 20 and finish_hour < 22)) then 2
+--             when (finish_hour < 9 or finish_hour >= 23) then 3  --半夜
+--             else 0
+--           end as peek_time
+--         from
+--           (
+--             select
+--               tmp.*,
+--               hour(finish_time) as finish_hour
+--             from
+--               algo_test.dy_eta_c_vali_08 as tmp
+--           ) as tmp1
+--       ) a
+--     group by
+--       transporter_id,
+--       city_id
+-- ) a;
+--
 
 
 
---11 presto 运行【重要】7 和7.1拼起来 变成了一个有天气，有geohash，有骑手平均交付时间
-drop table algo_test.dy_eta_c_11;
-create table algo_test.dy_eta_c_11 AS
+--10 拼接
+drop table algo_test.dy_eta_c_vali_10;
+create table algo_test.dy_eta_c_vali_10 AS
 select
   a.*,
   b.delivery_cnt,
@@ -465,13 +438,13 @@ select
   b.per_delivery_time1_peek3,
   b.per_delivery_time1_peek0
 from
-  algo_test.dy_eta_c_08 as a
-  inner join algo_test.dy_eta_c_10_peek as b on (
+  algo_test.dy_eta_c_vali_08 as a
+  inner join algo_test.dy_eta_c_09_peek as b on (   --用train里面的09表
     a.transporter_id = b.transporter_id
     and a.city_id = b.city_id
   );
 select
-  count(distinct order_id) as cd11,
-  count(*) as c11
+  count(distinct order_id) as cd10,
+  count(*) as c10
 from
-  algo_test.dy_eta_c_11;
+  algo_test.dy_eta_c_vali_10;
