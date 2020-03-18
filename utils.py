@@ -21,6 +21,10 @@ import os
 
 
 def generate_sql_file(sql_info):
+    """
+    把要执行的sql写到文件
+    return 文件地址
+    """
     tmp_sql_path = PROJECT_PATH + '/tmp/tmp_sql'
     if not os.path.exists(PROJECT_PATH + '/tmp'):
         os.mkdir(tmp_sql_path)
@@ -30,7 +34,10 @@ def generate_sql_file(sql_info):
 
 
 def load_sql_data(sql_info, data_path=None):
-    """ 执行sql """
+    """
+    执行sql
+    sql_info： sql语句
+    """
     sql_path = generate_sql_file(sql_info)
     if data_path:
         commands.getstatusoutput(

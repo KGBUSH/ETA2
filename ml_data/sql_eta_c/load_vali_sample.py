@@ -14,8 +14,8 @@ def create_sample_data():
     跑sql序列
     :return:
     """
-    date_begin = '2020-02-13'
-    date_end = '2020-03-13'
+    date_begin = '2020-03-10'
+    date_end = '2020-03-12'
     sql_info = GENERATE_VALI_SAMPLE_SQL.replace('{date_begin}', date_begin) \
         .replace('{date_end}', date_end)
     load_sql_data(sql_info)
@@ -51,5 +51,5 @@ def load_sample_data_157():
 
 
 if __name__ == '__main__':
-    # create_sample_data()  # 慎用！！！会删了所有表重跑.
+    create_sample_data()  # 慎用！！！会删了所有表重跑.
     load_sample_data_157()
