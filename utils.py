@@ -27,7 +27,7 @@ def generate_sql_file(sql_info):
     """
     tmp_sql_path = PROJECT_PATH + '/tmp/tmp_sql'
     if not os.path.exists(PROJECT_PATH + '/tmp'):
-        os.mkdir(tmp_sql_path)
+        os.mkdir(PROJECT_PATH + '/tmp')
     with open(tmp_sql_path, 'w') as f:
         f.write(sql_info)
     return tmp_sql_path
