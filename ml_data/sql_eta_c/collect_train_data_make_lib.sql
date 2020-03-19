@@ -133,7 +133,8 @@ from
   )
 where
   Invalid.order_id is null;  --不要忘了加这个条件
-
+select count(*) as c3, count(distinct(order_id)) as cd3
+from algo_test.dy_eta_c_03;
 
 
 
@@ -215,9 +216,9 @@ from (
       a.city_id,
       count(1) as delivery_cnt,
       --好像其他地方也有历史订单的统计，这个是交付成功（又进过圈）的样本数量
-      cast(avg(delivery_time1) as int) as avg_delivery_time1,
+      --cast(avg(delivery_time1) as int) as avg_delivery_time1,
       cast(avg(delivery_time2) as int) as avg_delivery_time2,
-      percentile(delivery_time1, 0.5) as per_delivery_time1,
+      --percentile(delivery_time1, 0.5) as per_delivery_time1,
       percentile(delivery_time2, 0.5) as per_delivery_time2,
 
       count(case when peek_time = 1 then 1 end) as cnt_peek1, -- 统计高峰阶段的订单量, 午餐晚餐
@@ -225,10 +226,17 @@ from (
       count(case when peek_time = 3 then 1 end) as cnt_peek3, -- 统计半夜到清晨阶段的订单量
       count(case when peek_time = 0 then 1 end) as cnt_peek0, -- 统计其他阶段的订单量
 
-      percentile((case when peek_time = 1 then delivery_time2 end), 0.5) as per_delivery_time_peek1,
-      percentile((case when peek_time = 2 then delivery_time2 end), 0.5) as per_delivery_time_peek2,
-      percentile((case when peek_time = 3 then delivery_time2 end), 0.5) as per_delivery_time_peek3,
-      percentile((case when peek_time = 0 then delivery_time2 end), 0.5) as per_delivery_time_peek0
+
+      cast(avg((case when peek_time = 1 then delivery_time2 end)) as int) as per_delivery_time_peek1,
+      cast(avg((case when peek_time = 2 then delivery_time2 end)) as int) as per_delivery_time_peek2,
+      cast(avg((case when peek_time = 3 then delivery_time2 end)) as int) as per_delivery_time_peek3,
+      cast(avg((case when peek_time = 0 then delivery_time2 end)) as int) as per_delivery_time_peek0
+
+--  机器扛不住，所以换成avg
+--       percentile((case when peek_time = 1 then delivery_time2 end), 0.5) as per_delivery_time_peek1,
+--       percentile((case when peek_time = 2 then delivery_time2 end), 0.5) as per_delivery_time_peek2,
+--       percentile((case when peek_time = 3 then delivery_time2 end), 0.5) as per_delivery_time_peek3,
+--       percentile((case when peek_time = 0 then delivery_time2 end), 0.5) as per_delivery_time_peek0
 
     from
       (
@@ -257,7 +265,7 @@ from (
       transporter_id,
       city_id
 ) a;
-select count(*) as c5, count(distinct(order_id)) as cd5
+select count(*) as c5, count(distinct(transporter_id)) as cd5
 from algo_test.dy_eta_c_05_peek;
 
 
@@ -347,7 +355,7 @@ group by
   a.poi_lat,
   a.poi_lng
 having order_cnt >= 5;
-select count(*) as c7, count(distinct(order_id)) as cd7
+select count(*) as c7, count(distinct(poi_id)) as cd7
 from algo_test.dy_eta_c_07_poi_statistics;
 
 
@@ -360,116 +368,3 @@ from algo_test.dy_eta_c_07_poi_statistics;
 
 
 
-
-
-
-
-
-
-
---7 计算 POI 级别均值、中位数等服务时效，****放开distance的限制***
--- key 加入 poi的经纬度
--- 加入方差，transporter_id等数据
--- 加入supplier_id，s_r直线距离
-drop table algo_test.dy_eta_c_07;
-create table algo_test.dy_eta_c_07 as
-select
-  A.order_id,
-  A.supplier_id,
-  A.transporter_id,
-  A.receiver_id,
-  A.s_r_line_distance,
-  A.finish_time,
-  A.receiver_address,
-  A.cargo_type_id,
-  A.cargo_weight,
-  --A.cargo_amt,
-  --A.tips_amt,
-  --A.allowance_amt,
-  A.r_lng,
-  A.r_lat,
-  B.poi_id,
-  --B.poi_name,
-  B.poi_lat,
-  B.poi_lng,
-  A.is_hard_poi,
-  A.difficulty,
-  A.distance as receiver_poi_distance,  --当前收货人到poi距离
-  B.percentile_delivery_time_poi,  --下面三个都是poi的历史数据
-  B.avg_delivery_time_poi,
-  B.percentile_distance_poi,
-  B.std_distance_poi,
-  B.std_delivery_time_poi,
-  B.order_cnt,
-  B.city_id,
-  A.delivery_time1,
-  A.delivery_time2,
-  abs(B.percentile_delivery_time_poi - A.delivery_time1) as error1,  -- POI中位统计时间
-  abs(B.percentile_delivery_time_poi - A.delivery_time2) as error2
-from
-  (
-    select
-      a.*
-    from
-      algo_test.dy_eta_c_05 a
-  ) A
-  join algo_test.dy_eta_c_06_poi_statistics as B on (  -- 上面做的统计表
-    A.poi_id = B.poi_id
-    --and A.poi_name = B.poi_name
-    and A.city_id = B.city_id
-    and A.poi_lat = B.poi_lat
-    and A.poi_lng = B.poi_lng
-  );
-
-
-
-
---8. 把transporter的信息合入进来，做到algo_db中, 最后又转存到algo_test
-drop table algo_test.dy_eta_c_08;
-create table algo_test.dy_eta_c_08 as
-select
-  bef.*,
-  T.history_order_num as t_history_order_num,
-  T.avg_a1_time as t_avg_a1_time,
-  T.avg_a2_time as t_avg_a2_time
-from
-  algo_test.dy_eta_c_07 as bef
-  inner join algo_test.dy_transporter_history_delivery_city0_filter as T on (
-    bef.transporter_id = T.transporter_id
-    and bef.city_id = T.city_id
-  );
-
-
-
-
-
-
---10 拼接
-drop table algo_test.dy_eta_c_10;
-create table algo_test.dy_eta_c_10 AS
-select
-  a.*,
-  b.delivery_cnt,
-  b.avg_delivery_time1,
-  b.avg_delivery_time2,
-  b.per_delivery_time1,
-  b.per_delivery_time2,
-  b.cnt_peek1,
-  b.cnt_peek2,
-  b.cnt_peek3,
-  b.cnt_peek0,
-  b.per_delivery_time1_peek1,
-  b.per_delivery_time1_peek2,
-  b.per_delivery_time1_peek3,
-  b.per_delivery_time1_peek0
-from
-  algo_test.dy_eta_c_08 as a
-  inner join algo_test.dy_eta_c_09_peek as b on (
-    a.transporter_id = b.transporter_id
-    and a.city_id = b.city_id
-  );
-select
-  count(distinct order_id) as cd10,
-  count(*) as c10
-from
-  algo_test.dy_eta_c_10;
