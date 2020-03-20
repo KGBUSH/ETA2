@@ -243,6 +243,11 @@ class FeatureExtractorETAc(FeatureExtractor):
         X = []
         Y = []
         counter = 0  # 记录源文件读了多少行，并不代表有效数据行数
+        with open(sample_file, 'r') as fr:
+            lines_num = len(fr.readlines())
+        if limit_num == -1:
+            limit_num = lines_num
+
         sample_f = open(sample_file, 'r')
         print("load samples from %s ... ..." % sample_file)
         for i in tqdm(range(int(limit_num))):
