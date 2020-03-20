@@ -4,6 +4,7 @@
 # Copyright (C) 2016 xuekun.zhuang <zhuangxuekun@imdada.cn>
 # Licensed under the Dada tech.co.ltd - http://www.imdada.cn
 import matplotlib
+
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 import time
@@ -11,9 +12,9 @@ import random
 import cPickle as pickle
 import copy
 import collections
-import re
 import pandas as pd
 import seaborn as sns
+import numpy as np
 
 
 def save_object(obj, file_path):
@@ -94,6 +95,45 @@ def plotImp(model, X_col_name, num=20):
         num=X_col_name.__len__()))
     plt.tight_layout()
     plt.show()
+
+
+def error_analysis(predict, ground_truth_vec=None, prefix_title=''):
+    """
+    直方图统计误差
+    :param predict: 预测值：np一维向量
+    :param ground_truth_vec: np 统计绝对误差绝对误差率：abs(预测耗时 - 真实耗时)/真实耗时，举例：真实耗时=10min，预测耗时=15min，则绝对误差=5min，绝对误差率=5min/10min， 为50%。
+    :param prefix_title:
+    :return:
+    """
+    error_vec = np.abs(predict - ground_truth_vec)
+    e50 = round(np.percentile(error_vec, 50), 1)
+    e67 = round(np.percentile(error_vec, 67), 1)
+    e80 = round(np.percentile(error_vec, 80), 1)
+    e95 = round(np.percentile(error_vec, 95), 1)
+
+    # plt.hist(error_vec, 50)
+    title = str(error_vec.shape) + "{prefix_title} {e50}@50%, {e67}@67%, {e80}@80%, {e95}@95%".format(
+        prefix_title=prefix_title,
+        e50=e50,
+        e67=e67,
+        e80=e80,
+        e95=e95
+    )
+    if ground_truth_vec is None:
+        print(title)
+        # plt.title(title)
+        # plt.show()
+    else:
+        mape = np.float32(error_vec) / ground_truth_vec
+        bigger = mape.mean()  # 平均百分误差率
+        bigger30 = (mape > 0.3).sum() / float(mape.shape[0])  # 预估时间的绝对误差率超过30%的订单占比量
+        bigger50 = (mape > 0.5).sum() / float(mape.shape[0])  # 预估时间的绝对误差率超过50%的订单占比量
+        bigger70 = (mape > 0.7).sum() / float(mape.shape[0])
+        print title, \
+            ';  误差率>30%:', "%.1f%%" % (bigger30 * 100), \
+            ', 误差率>50%:', "%.1f%%" % (bigger50 * 100), \
+            ', 误差率>70%:', "%.1f%%" % (bigger70 * 100), \
+            ';  平均误差(s)=', int(error_vec.mean()), ', 平均百分误差率%=', "%.1f%%" % (bigger * 100)
 
 
 if __name__ == '__main__':

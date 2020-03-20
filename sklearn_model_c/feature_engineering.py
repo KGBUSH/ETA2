@@ -4,7 +4,7 @@
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
-from utils.basic_utils import load_object, save_object
+from utils.basic_utils import load_object, save_object, error_analysis
 from sklearn.feature_extraction import DictVectorizer
 from sklearn_model_c.feature import ETA_C_COLUMNS_DICT
 from utils.building_re_utils import ETABuildingRecognizer
@@ -106,7 +106,6 @@ class FeatureExtractor(FeatureBase):
         sample_f = open(sample_file, 'r')
         print("load samples from %s ... ..." % sample_file)
         for i in tqdm(range(int(limit_num))):
-            print i
             line = sample_f.readline()
             line = line.strip()
             if line == '':
@@ -124,9 +123,9 @@ class FeatureExtractor(FeatureBase):
                 print(e)
                 pass
 
-        print 'aaaaaaaa'
         x_std = self.fea_transformer["dict_vector"].fit_transform(X)
         y_std = np.array(Y)
+        print('load data finish!')
         return x_std, y_std
 
     def get_fea_selected(self, items, is_multi_class=False):
@@ -234,7 +233,45 @@ class FeatureExtractorETAc(FeatureExtractor):
         FeatureExtractor.__init__(self)
         self.need_norm = False
         self.label_choose = 'delivery_time2'
+        self.old_label = 'percentile_delivery_time_poi'
         self.invalid_field_replace = -1
+
+    # def evaluate_old(self):
+    #     old = [item[self.old_label] for item in ]
+
+    def load(self, sample_file, limit_num=1e5):
+        X = []
+        Y = []
+        counter = 0  # 记录源文件读了多少行，并不代表有效数据行数
+        sample_f = open(sample_file, 'r')
+        print("load samples from %s ... ..." % sample_file)
+        for i in tqdm(range(int(limit_num))):
+            line = sample_f.readline()
+            line = line.strip()
+            if line == '':
+                break
+            try:
+                fea_std_list, goal_list = self.process_line(line, use_expand=False)
+                for fea in fea_std_list:
+                    X.append(fea)
+                for goal in goal_list:
+                    Y.append(goal)
+                counter += 1
+                if counter > limit_num:
+                    break
+            except Exception as e:
+                print(e)
+                pass
+
+        x_std = self.fea_transformer["dict_vector"].fit_transform(X)
+        y_std = np.array(Y)
+        print('load data finish!')
+
+        # 评估老算法
+        old = [item[self.old_label] for item in X]
+        error_analysis(predict=np.array(old), ground_truth_vec=y_std, prefix_title='old_C')
+        return x_std, y_std
+
 
     def process_line(self, line, is_multi_class=False, use_expand=True):
         fea_std_list = []

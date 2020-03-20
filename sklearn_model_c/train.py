@@ -3,7 +3,7 @@
 
 from config import CLASSIFIER_SRC_C_ROOT, DATA_C_TRAIN_PATH
 from feature_engineering import FeatureExtractorETAc
-from utils.basic_utils import TimeRecorder, save_object, load_object
+from utils.basic_utils import TimeRecorder, save_object, load_object, error_analysis
 from model import BinaryLRModel, LgbRegressionModel
 from sklearn.model_selection import train_test_split
 
@@ -105,7 +105,6 @@ class RegressionTrainer(object):
         self.y_test = None
 
     def run(self, model_type, train_file, need_ini, limit_num):
-
         self.fea_preprocessor_path = CLASSIFIER_SRC_C_ROOT + "/{type}_fea_preprocess.pkl".format(type=model_type)
         self.time_recorder.tick()
         print("-" * 100 + "LOAD SAMPLES")
@@ -137,7 +136,13 @@ class RegressionTrainer(object):
 
         # test
         y_pred = self.model.test(self.x_test, self.y_test)
+        error_analysis(predict=y_pred, ground_truth_vec=self.y_test,
+                       prefix_title='ETA_C test data')
+        y_pred_train = self.model.test(self.x_train, self.y_train)
+        error_analysis(predict=y_pred_train, ground_truth_vec=self.y_train,
+                       prefix_title='ETA_C train data')
         self.time_recorder.tock("test finished !")
+
 
         # # check output
         # self.model.get_fea_importance(CLASSIFIER_SRC_C_ROOT + "/%s" % model_type,
@@ -147,7 +152,8 @@ class RegressionTrainer(object):
         if need_ini:
             self.x_train, self.y_train = self.fea_extractor.load(train_file, limit_num)
             # self.x_train = self.x_train.toarray()
-            self.time_recorder.tock("sample loaded successfully !")
+            self.time_recorder.tock("sample loaded successfully: "
+                                    + str(self.x_train.shape) + str(self.y_train.shape))
 
             # save x and y
             if not os.path.exists(CLASSIFIER_SRC_C_ROOT):
