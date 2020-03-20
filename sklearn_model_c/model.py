@@ -1,25 +1,29 @@
 # -*- coding: utf-8 -*-
-
-import matplotlib
-
-matplotlib.use('Agg')
+#
+# import matplotlib
+#
+# matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import collections
 import numpy as np
 from multiprocessing import cpu_count
 from config import PROJECT_PATH
-from utils import save_object
+from utils.basic_utils import save_object
+
+import lightgbm as lgb
 from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
-from feature_engineering import FeatureExtractor
+from feature_engineering import FeatureExtractor, NormalEncoder
 from sklearn.metrics import accuracy_score, recall_score, roc_auc_score, \
-    roc_curve, auc, precision_score
+    roc_curve, precision_score
 
 
 class Model(object):
     def __init__(self):
         self.MODEL = None
         self.feature_extractor = FeatureExtractor()
+
+    def train(self, **kwargs):
+        raise NotImplementedError("train func not implemented!")
 
     def save_model(self, model_path):
         save_object(self.MODEL, model_path)
@@ -89,7 +93,7 @@ class BinaryModel(Model):
             plt.ylabel('True Positive Rate')
             plt.title('Order Accept Time Prediction')
             plt.legend(loc="lower right")
-            plt.savefig(PROJECT_PATH + '/sklearn_model/resource/AUC.png')
+            plt.savefig(PROJECT_PATH + '/sklearn_model_c/resource/AUC.png')
             plt.cla()
 
         return sample_num, dimension, pos, neg, \
@@ -149,7 +153,7 @@ class BinaryLRModel(BinaryModel):
             penalty='l2',
             solver='sag',
             tol=1e-4,
-            n_jobs=cpu_count()-1,
+            n_jobs=cpu_count() - 1,
             verbose=1,
             max_iter=10000,
             class_weight={1: 0.84, -1: 0.16}
@@ -164,3 +168,45 @@ class BinaryLRModel(BinaryModel):
                              self.MODEL.coef_.ravel()):
             coef_file.write("%s\t%s\n" % (fea, coef))
         coef_file.close()
+
+
+class LgbRegressionModel(Model):
+    def __init__(self):
+        Model.__init__(self)
+        self.MODEL = lgb.LGBMRegressor(
+            objective='mae',
+            n_estimators=80,
+            n_jobs=5
+        )
+
+    def train(self, x_train, y_train, is_warm_start=False):
+        is_warm_start = False  # lgb 暂时没做
+        title = "%-20s\t%-20s\t%-20s\t%-20s" % ("num", "dimension", "pos", "neg")
+        print(title)
+        fmt = "%-20d\t%-20d\t%-20d\t%-20d"
+        pos_neg_stat = collections.Counter(y_train)
+        sample_num, dimension, pos, neg = x_train.shape[0], x_train.shape[1], pos_neg_stat[1], pos_neg_stat[-1]
+        msg = fmt % (sample_num, dimension, pos, neg)
+        print(msg)
+
+        if is_warm_start:
+            # https://blog.csdn.net/suzyu12345/article/details/81461667
+            pass
+        else:
+            y_train = NormalEncoder.skewness(y_train)
+            self.MODEL.fit(x_train, y_train)
+        return sample_num, dimension, pos, neg
+
+    def test(self, x_test, y_test):
+        print("-" * 100 + "TEST")
+        title = "%-20s\t%-20s\t%-20s\t%-20s" % ("num", "dimension", "pos", "neg")
+        print(title)
+        fmt = "%-20d\t%-20d\t%-20d\t%-20d"
+        pos_neg_stat = collections.Counter(y_test)
+        sample_num, dimension, pos, neg = x_test.shape[0], x_test.shape[1], pos_neg_stat[1], pos_neg_stat[-1]
+        msg = fmt % (sample_num, dimension, pos, neg)
+        print(msg)
+
+        y_predict = self.MODEL.predict(x_test)
+        y_predict = NormalEncoder.skewness_recover(y_predict)
+        return y_predict

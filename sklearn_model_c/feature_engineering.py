@@ -1,14 +1,13 @@
 # -*- coding: utf-8 -*-
 
 
-import time
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
-from utils import load_object, save_object
+from utils.basic_utils import load_object, save_object
 from sklearn.feature_extraction import DictVectorizer
-from sklearn_model.eta_c.feature import ETA_C_COLUMNS_DICT
-from sklearn_model.utils import ETABuildingRecognizer
+from sklearn_model_c.feature import ETA_C_COLUMNS_DICT
+from utils.building_re_utils import ETABuildingRecognizer
 
 
 BASE_FEATURE_DICT = {
@@ -58,6 +57,23 @@ class NormalEncoder(Encoder):
         else:
             return v_normalized
 
+    @staticmethod
+    def skewness(value_list):
+        """
+        偏态校正，针对右偏态(长尾) https://blog.csdn.net/liuweiyuxiang/article/details/90233203
+        :param value_list: np,df,list 都可以
+        :return:
+        """
+        return np.log1p(value_list)
+
+    @staticmethod
+    def skewness_recover(value_list):
+        """
+        turn back
+        """
+        return np.expm1(value_list)
+
+
 
 class FeatureBase(object):
     def __init__(self):
@@ -81,11 +97,12 @@ class FeatureExtractor(FeatureBase):
             # "dis_range": "earning",
             # "cargo_type_id": "earning"
         }
+        self.need_norm = True
 
     def load(self, sample_file, limit_num=1e5):
         X = []
         Y = []
-        counter = 0
+        counter = 0  # 记录源文件读了多少行，并不代表有效数据行数
         sample_f = open(sample_file, 'r')
         print("load samples from %s ... ..." % sample_file)
         for i in tqdm(range(int(limit_num))):
@@ -95,9 +112,7 @@ class FeatureExtractor(FeatureBase):
             if line == '':
                 break
             try:
-                fea_std_list, goal_list = self.process_line(
-                    line,
-                    use_expand=False)
+                fea_std_list, goal_list = self.process_line(line, use_expand=False)
                 for fea in fea_std_list:
                     X.append(fea)
                 for goal in goal_list:
@@ -140,7 +155,7 @@ class FeatureExtractor(FeatureBase):
 
     def get_fea_std(self, items, is_multi_class):
         feature_selected = self.get_fea_selected(items, is_multi_class)
-        fea_std = self.combine_feature_groups(feature_selected, True)
+        fea_std = self.combine_feature_groups(feature_selected, self.need_norm)
         fea_std = self.cross_fea_std(fea_std)
         return fea_std
 
@@ -169,9 +184,8 @@ class FeatureExtractor(FeatureBase):
             items = line.strip().split(sep)
             # origin state
             fea_std = self.get_fea_std(items, is_multi_class)
-            class_label = FeatureExtractor.construct_class_label(
-                items[BASE_FEATURE_DICT["invalid_label"]],
-                is_multi_class)
+            class_label = FeatureExtractor.construct_class_label(items[BASE_FEATURE_DICT["invalid_label"]],
+                                                                 is_multi_class)
             if class_label != 0:
                 fea_std_list.append(fea_std)
                 goal_list.append(class_label)
@@ -196,7 +210,8 @@ class FeatureExtractor(FeatureBase):
                     if need_norm:
                         features[k] = self.normal_encoder.normalize(k, v)
                     else:
-                        features[k] = v
+                        # features[k] = v  # 本来就是，不需要再赋一次值
+                        pass
             if not fea_std:
                 fea_std = features
             else:
@@ -217,6 +232,44 @@ class FeatureExtractorETAc(FeatureExtractor):
 
     def __init__(self):
         FeatureExtractor.__init__(self)
+        self.need_norm = False
+        self.label_choose = 'delivery_time2'
+        self.invalid_field_replace = -1
+
+    def process_line(self, line, is_multi_class=False, use_expand=True):
+        fea_std_list = []
+        goal_list = []
+        try:
+            sep = None
+            if '\t' in line:
+                sep = '\t'
+            elif ',' in line:
+                sep = ','
+            else:
+                print line
+
+            line = line.replace('NULL', '-1').replace('Null', '-1').replace('None', '-1')
+
+
+            items = line.strip().split(sep)
+            if items[0] == '289401378439990':
+                pass
+            # origin state
+            fea_std = self.get_fea_std(items, is_multi_class)
+            label = float(items[ETA_C_COLUMNS_DICT[self.label_choose]])
+
+            # 交付时间大于0
+            if label > 0:
+                fea_std_list.append(fea_std)
+                goal_list.append(label)
+
+        except Exception as e:
+            # print(e)
+            pass
+        if fea_std_list.__len__() == 0:
+            pass
+        return fea_std_list, goal_list
+
 
     def get_fea_selected(self, items, is_multi_class=False):
         """
@@ -244,9 +297,9 @@ class FeatureExtractorETAc(FeatureExtractor):
                 "t_avg_a2_time": float(items[ETA_C_COLUMNS_DICT["t_avg_a2_time"]]),
                 "delivery_cnt": float(items[ETA_C_COLUMNS_DICT["delivery_cnt"]]),
 
-                "avg_delivery_time1": float(items[ETA_C_COLUMNS_DICT["avg_delivery_time1"]]),
+                # "avg_delivery_time1": float(items[ETA_C_COLUMNS_DICT["avg_delivery_time1"]]),
                 "avg_delivery_time2": float(items[ETA_C_COLUMNS_DICT["avg_delivery_time2"]]),
-                "per_delivery_time1": float(items[ETA_C_COLUMNS_DICT["per_delivery_time1"]]),
+                # "per_delivery_time1": float(items[ETA_C_COLUMNS_DICT["per_delivery_time1"]]),
                 "per_delivery_time2": float(items[ETA_C_COLUMNS_DICT["per_delivery_time2"]]),
                 "cnt_peek1": float(items[ETA_C_COLUMNS_DICT["cnt_peek1"]]),
                 "cnt_peek2": float(items[ETA_C_COLUMNS_DICT["cnt_peek2"]]),
@@ -295,16 +348,16 @@ class FeatureExtractorETAc(FeatureExtractor):
         current_per_delivery_time_peek = -1
         if (11 <= now_hour < 13) or (18 <= now_hour < 20):
             current_cnt_peek = feature_selected['normal']['cnt_peek1']
-            current_per_delivery_time_peek = feature_selected['normal']['per_delivery_time1_peek1']
+            current_per_delivery_time_peek = feature_selected['normal']['per_delivery_time_peek1']
         elif (9 <= now_hour < 11) or (15 <= now_hour < 17) or (20 <= now_hour < 22):
             current_cnt_peek = feature_selected['normal']['cnt_peek2']
-            current_per_delivery_time_peek = feature_selected['normal']['per_delivery_time1_peek2']
+            current_per_delivery_time_peek = feature_selected['normal']['per_delivery_time_peek2']
         elif (now_hour < 9) or (23 <= now_hour):
             current_cnt_peek = feature_selected['normal']['cnt_peek3']
-            current_per_delivery_time_peek = feature_selected['normal']['per_delivery_time1_peek3']
+            current_per_delivery_time_peek = feature_selected['normal']['per_delivery_time_peek3']
         else:
             current_cnt_peek = feature_selected['normal']['cnt_peek0']
-            current_per_delivery_time_peek = feature_selected['normal']['per_delivery_time1_peek0']
+            current_per_delivery_time_peek = feature_selected['normal']['per_delivery_time_peek0']
 
         feature_selected['normal']['current_cnt_peek'] = current_cnt_peek
         feature_selected['normal']['current_per_delivery_time_peek'] = current_per_delivery_time_peek

@@ -3,12 +3,17 @@
 #
 # Copyright (C) 2016 xuekun.zhuang <zhuangxuekun@imdada.cn>
 # Licensed under the Dada tech.co.ltd - http://www.imdada.cn
+import matplotlib
+matplotlib.use('TkAgg')
+import matplotlib.pyplot as plt
 import time
 import random
 import cPickle as pickle
 import copy
 import collections
 import re
+import pandas as pd
+import seaborn as sns
 
 
 def save_object(obj, file_path):
@@ -78,49 +83,17 @@ def get_under_sample_ratio(pos, neg):
             return -1, ratio
 
 
-class BuildingRecognizer(object):
-    PATTERN_RECOGNIZE_BASEMENT = re.compile(ur'-\d楼|-\d层|-\d[fF]')
-    PATTERN_RECOGNIZE = re.compile(ur'\d+楼|\d{3,4}$|\d{3,4} |\d{3,4}室|\d{3,4}房|\d+层|\d+[fF]')
-    REPLACE_RECOGNIZE = re.compile(ur'楼|室|层|房|[A-Za-z]| ')
-    CHINESE_NUM_RECOGNIZE = re.compile(ur'[一二三四五六七八九十]+')
-    MINUS_NUM_RECOGNIZE = re.compile(ur'[Bb负]')
-
-    PATTERN_RECOGNIZE_BUILDING = re.compile(ur'\d+号楼|\d+栋|\d+幢')
-    REPLACE_RECOGNIZE_BUILDING = re.compile(ur'号楼|栋|幢')
-
-    def get_building_floor(self, address):
-        # 将汉语的数字转换成阿拉伯数字
-        address = self.CHINESE_NUM_RECOGNIZE.sub(cn2dig, address)
-        address = self.MINUS_NUM_RECOGNIZE.sub('-', address)
-        res_basement = self.PATTERN_RECOGNIZE_BASEMENT.findall(address)
-        res = self.PATTERN_RECOGNIZE.findall(address)
-        res = res_basement + res
-        if res:
-            floor = self.REPLACE_RECOGNIZE.sub("", res[0])
-            if len(floor) > 2:
-                return int(floor[0:-2])
-            else:
-                return int(floor)
-        else:
-            return 0
-
-    def get_building_num(self, address):
-        """获取楼号"""
-        address = self.CHINESE_NUM_RECOGNIZE.sub(cn2dig, address)
-        address = self.MINUS_NUM_RECOGNIZE.sub('-', address)
-        building = self.PATTERN_RECOGNIZE_BUILDING.findall(address)
-        result_building = -999
-        if building:
-            result_building = self.REPLACE_RECOGNIZE_BUILDING.sub("", building[0])
-            result_building = int(result_building)
-        return result_building
-
-
-class ETABuildingRecognizer(BuildingRecognizer):
-    """
-    加了几号楼提取
-    """
-    PATTERN_RECOGNIZE = re.compile(ur'\d+楼|\d{3,4}$|\d{3,4} |\d{3,4}室|\d{3,4}房|\d+层|\d+[A-Za-z]')
+def plotImp(model, X_col_name, num=20):
+    """seaborn 画特征重要性图"""
+    feature_imp = pd.DataFrame({'Value': model.feature_importances_, 'Feature': X_col_name})
+    plt.figure(figsize=(8, 5))
+    # sns.set(font_scale = 5)
+    sns.barplot(x="Value", y="Feature", data=feature_imp.sort_values(by="Value",
+                                                                     ascending=False)[0:num])
+    plt.title('LightGBM {num} Features (avg over folds)'.format(
+        num=X_col_name.__len__()))
+    plt.tight_layout()
+    plt.show()
 
 
 if __name__ == '__main__':
