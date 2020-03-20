@@ -10,6 +10,8 @@ from utils.basic_utils import TimeRecorder, save_object, load_object, \
 
 import numpy as np
 import os
+from tqdm import tqdm
+
 
 
 class EtaCPredictModel(object):
@@ -52,7 +54,8 @@ def test():
 
     cnt = 0
     err_cnt = 0
-    for row_info in data_info:
+    for i in tqdm(range(len(data_info))):
+        row_info = data_info[i]
         try:
             y_predict, gt, old = model.validate_one_line(row_info)  # 一个数
             pred_list.append(y_predict)
