@@ -3,8 +3,8 @@
 注：一定要确认create_sample_data(函数是否调用)！！
 """
 import commands
-from config import PROJECT_DATA_PATH
-from utils import load_sql_data
+from config import DATA_C_TRAIN_PATH
+from utils.sql_utils import load_sql_data
 from ml_data.sql_eta_c.load_data import GENERATE_VALI_SAMPLE_SQL, DOWNLOAD_VALI_DATA_TO_LOCAL
 import os
 
@@ -22,8 +22,8 @@ def create_sample_data():
 
 
 def load_sample_data_157():
-    path_dir = PROJECT_DATA_PATH + "/c_vali_sample_data_dir"
-    data_path = PROJECT_DATA_PATH + "/c_vali_sample_data"
+    path_dir = DATA_C_TRAIN_PATH + "/c_vali_sample_data_dir"
+    data_path = DATA_C_TRAIN_PATH + "/c_vali_sample_data"
 
     # 1 hive 拉下来的数据会先存到文件夹
     cmd = "rm -rf {path}".format(path=path_dir)
