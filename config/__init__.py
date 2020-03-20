@@ -14,7 +14,7 @@ PROJECT_PATH = os.path.abspath(
     os.path.join(os.path.abspath(os.path.dirname(__file__)), os.pardir))
 
 # 训练模型存储位置
-CLASSIFIER_SRC_C_ROOT = PROJECT_PATH + "/sklearn_model_c/resource"
+CLASSIFIER_SRC_C_ROOT = PROJECT_PATH + "/analyze_c/resource"
 
 BASE_FEATURE_ETA_C_DICT = {
     # 'transporter_id': 0,  # 没有用了

@@ -19,6 +19,7 @@ from sklearn.metrics import accuracy_score, recall_score, roc_auc_score, \
 
 class Model(object):
     def __init__(self):
+        self.model_type = None
         self.MODEL = None
         self.feature_extractor = FeatureExtractor()
 
@@ -93,7 +94,7 @@ class BinaryModel(Model):
             plt.ylabel('True Positive Rate')
             plt.title('Order Accept Time Prediction')
             plt.legend(loc="lower right")
-            plt.savefig(PROJECT_PATH + '/sklearn_model_c/resource/AUC.png')
+            plt.savefig(PROJECT_PATH + '/analyze_c/resource/AUC.png')
             plt.cla()
 
         return sample_num, dimension, pos, neg, \
@@ -173,6 +174,7 @@ class BinaryLRModel(BinaryModel):
 class LgbRegressionModel(Model):
     def __init__(self):
         Model.__init__(self)
+        self.model_type = 'lgb'
         self.MODEL = lgb.LGBMRegressor(
             objective='mae',
             n_estimators=80,

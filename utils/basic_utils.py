@@ -16,6 +16,9 @@ import pandas as pd
 import seaborn as sns
 import numpy as np
 
+from config import DEBUG, CLASSIFIER_SRC_C_ROOT
+
+
 
 def save_object(obj, file_path):
     f = file(file_path, 'wb')
@@ -84,17 +87,25 @@ def get_under_sample_ratio(pos, neg):
             return -1, ratio
 
 
-def plotImp(model, X_col_name, num=20):
+def plotImp(model, X_col_name, model_type=None, num=20):
     """seaborn 画特征重要性图"""
-    feature_imp = pd.DataFrame({'Value': model.feature_importances_, 'Feature': X_col_name})
-    plt.figure(figsize=(8, 5))
-    # sns.set(font_scale = 5)
-    sns.barplot(x="Value", y="Feature", data=feature_imp.sort_values(by="Value",
-                                                                     ascending=False)[0:num])
-    plt.title('LightGBM {num} Features (avg over folds)'.format(
-        num=X_col_name.__len__()))
-    plt.tight_layout()
-    plt.show()
+    fea_importance_path = CLASSIFIER_SRC_C_ROOT + "/%s_feature_importance.csv" % model_type
+
+    df_feature = pd.DataFrame({'Value': model.feature_importances_, 'Feature': X_col_name})
+    df_feature = df_feature.sort_values(by=['Value'], ascending=False).reset_index(drop=True)
+    df_feature.to_csv(fea_importance_path, index=False)
+
+    if DEBUG:
+        plt.figure(figsize=(8, 5))
+        # sns.set(font_scale = 5)
+        sns.barplot(x="Value", y="Feature", data=df_feature.sort_values(by="Value",
+                                                                         ascending=False)[0:num])
+        plt.title('LightGBM {num} Features (avg over folds)'.format(
+            num=X_col_name.__len__()))
+        plt.tight_layout()
+        plt.show()
+
+
 
 
 def error_analysis(predict, ground_truth_vec=None, prefix_title=''):

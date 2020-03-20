@@ -6,7 +6,7 @@ import pandas as pd
 from tqdm import tqdm
 from utils.basic_utils import load_object, save_object, error_analysis
 from sklearn.feature_extraction import DictVectorizer
-from sklearn_model_c.feature import ETA_C_COLUMNS_DICT
+from analyze_c.feature import ETA_C_COLUMNS_DICT
 from utils.building_re_utils import ETABuildingRecognizer
 
 BASE_FEATURE_DICT = {
@@ -365,7 +365,7 @@ class FeatureExtractorETAc(FeatureExtractor):
         feature_selected['onehot']['hour'] = hour
         feature_selected['normal']['receiver_address_char_num'] = receiver_address_char_num
 
-        # # 几楼
+        # # 几楼  (这个特征没啥用了，由于疫情)
         # build = ETABuildingRecognizer()
         # floor = build.get_building_floor(items[ETA_C_COLUMNS_DICT["receiver_address"]])
         # is_floor_over6 = 1 if floor > 6 else 0

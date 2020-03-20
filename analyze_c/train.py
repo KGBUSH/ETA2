@@ -3,7 +3,9 @@
 
 from config import CLASSIFIER_SRC_C_ROOT, DATA_C_TRAIN_PATH, TRAIN_LIMIT_NUM
 from feature_engineering import FeatureExtractorETAc
-from utils.basic_utils import TimeRecorder, save_object, load_object, error_analysis
+from utils.basic_utils import TimeRecorder, save_object, load_object, \
+    error_analysis, plotImp
+
 from model import BinaryLRModel, LgbRegressionModel
 from sklearn.model_selection import train_test_split
 
@@ -147,6 +149,10 @@ class RegressionTrainer(object):
         # # check output
         # self.model.get_fea_importance(CLASSIFIER_SRC_C_ROOT + "/%s" % model_type,
         #                               self.fea_preprocessor_path)
+        columns_name = self.fea_extractor.fea_transformer["dict_vector"].get_feature_names()
+        plotImp(model=self.model.MODEL, X_col_name=columns_name, model_type=self.model.model_type)
+
+
 
     def load_sample(self, train_file, need_ini, limit_num):
         if need_ini:

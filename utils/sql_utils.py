@@ -1,18 +1,5 @@
 # -*- coding: utf-8 -*-
 
-"""
-
-@author: zhenfengjiang
-
-@contact: zhenfengjiang@imdada.cn
-
-@file: sql_utils.py
-
-@time: 2019/8/23 14:56
-
-@desc:
-
-"""
 
 import commands
 import datetime
