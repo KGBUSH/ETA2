@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 
-from config import CLASSIFIER_SRC_C_ROOT, DATA_C_TRAIN_PATH
+from config import CLASSIFIER_SRC_C_ROOT, DATA_C_TRAIN_PATH, TRAIN_LIMIT_NUM
 from feature_engineering import FeatureExtractorETAc
 from utils.basic_utils import TimeRecorder, save_object, load_object, error_analysis
 from model import BinaryLRModel, LgbRegressionModel
@@ -178,5 +178,5 @@ if __name__ == "__main__":
         model_type='lgb',
         train_file=DATA_C_TRAIN_PATH,
         need_ini=True,
-        limit_num=20000
+        limit_num=TRAIN_LIMIT_NUM
     )
