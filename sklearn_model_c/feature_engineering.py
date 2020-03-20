@@ -9,7 +9,6 @@ from sklearn.feature_extraction import DictVectorizer
 from sklearn_model_c.feature import ETA_C_COLUMNS_DICT
 from utils.building_re_utils import ETABuildingRecognizer
 
-
 BASE_FEATURE_DICT = {
     'transporter_id': 0,  # 没有用了
     'score': 1,  # 等级分
@@ -72,7 +71,6 @@ class NormalEncoder(Encoder):
         turn back
         """
         return np.expm1(value_list)
-
 
 
 class FeatureBase(object):
@@ -273,10 +271,9 @@ class FeatureExtractorETAc(FeatureExtractor):
         print('load data finish!')
 
         # 评估老算法
-        old = [item[self.old_label] for item in X]
-        error_analysis(predict=np.array(old), ground_truth_vec=y_std, prefix_title='old_C')
+        old = pd.DataFrame(X).loc[:, self.old_label]
+        error_analysis(predict=old, ground_truth_vec=y_std, prefix_title='old_C')
         return x_std, y_std
-
 
     def process_line(self, line, is_multi_class=False, use_expand=True):
         fea_std_list = []
@@ -292,10 +289,8 @@ class FeatureExtractorETAc(FeatureExtractor):
 
             line = line.replace('NULL', '-1').replace('Null', '-1').replace('None', '-1')
 
-
             items = line.strip().split(sep)
-            if items[0] == '289401378439990':
-                pass
+
             # origin state
             fea_std = self.get_fea_std(items, is_multi_class)
             label = float(items[ETA_C_COLUMNS_DICT[self.label_choose]])
@@ -311,7 +306,6 @@ class FeatureExtractorETAc(FeatureExtractor):
         if fea_std_list.__len__() == 0:
             pass
         return fea_std_list, goal_list
-
 
     def get_fea_selected(self, items, is_multi_class=False):
         """
@@ -368,16 +362,16 @@ class FeatureExtractorETAc(FeatureExtractor):
         hour = pd.Timestamp(items[ETA_C_COLUMNS_DICT["finish_time"]], unit='s', tz='Asia/Shanghai').hour
         # weekday = pd.Timestamp(items[ETA_C_COLUMNS_DICT["finish_time"]], unit='s', tz='Asia/Shanghai').dayofweek
         receiver_address_char_num = items[ETA_C_COLUMNS_DICT["receiver_address"]].__len__()
-
-        # 几楼
-        build = ETABuildingRecognizer()
-        floor = build.get_building_floor(items[ETA_C_COLUMNS_DICT["receiver_address"]])
-        is_floor_over6 = 1 if floor > 6 else 0
-
         feature_selected['onehot']['hour'] = hour
         feature_selected['normal']['receiver_address_char_num'] = receiver_address_char_num
-        feature_selected['normal']['floor'] = floor
-        feature_selected['normal']['is_floor_over6'] = is_floor_over6
+
+        # # 几楼
+        # build = ETABuildingRecognizer()
+        # floor = build.get_building_floor(items[ETA_C_COLUMNS_DICT["receiver_address"]])
+        # is_floor_over6 = 1 if floor > 6 else 0
+        # feature_selected['normal']['floor'] = floor
+        # feature_selected['normal']['is_floor_over6'] = is_floor_over6
+
         return feature_selected
 
     @staticmethod

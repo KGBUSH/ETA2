@@ -151,7 +151,6 @@ class RegressionTrainer(object):
     def load_sample(self, train_file, need_ini, limit_num):
         if need_ini:
             self.x_train, self.y_train = self.fea_extractor.load(train_file, limit_num)
-            # self.x_train = self.x_train.toarray()
             self.time_recorder.tock("sample loaded successfully: "
                                     + str(self.x_train.shape) + str(self.y_train.shape))
 
