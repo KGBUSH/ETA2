@@ -13,7 +13,6 @@ import os
 from tqdm import tqdm
 
 
-
 class EtaCPredictModel(object):
     def __init__(self, fea_transformer_path, model_path):
         self.feature_extractor = FeatureExtractorETAc()
@@ -39,21 +38,24 @@ class EtaCPredictModel(object):
 
 
 def test():
+    time_recorder.tock("Test started !")
+    data_path = DATA_C_VALI_PATH
     pred_list = []
     gt_list = []
     old_list = []
+
     fea_transformer_path = os.path.join(CLASSIFIER_SRC_C_ROOT, 'lgb_fea_preprocess.pkl')
     model_path = os.path.join(CLASSIFIER_SRC_C_ROOT, 'lgb_model.pkl')
     model = EtaCPredictModel(
         fea_transformer_path=fea_transformer_path,
         model_path=model_path
     )
-    data_path = DATA_C_VALI_PATH
     with open(data_path, 'r') as f:
         data_info = f.readlines()
 
     cnt = 0
     err_cnt = 0
+    time_recorder.tock("Model loaded !")
     for i in tqdm(range(len(data_info))):
         row_info = data_info[i]
         try:
@@ -66,7 +68,7 @@ def test():
             err_cnt += 1
             pass
         cnt += 1
-    print('总行数=%s; 错误行数=%s' % (cnt, err_cnt))
+    time_recorder.tock('总行数=%s; 错误加载行数=%s' % (cnt, err_cnt))
     error_analysis(predict=np.array(old_list),
                    ground_truth_vec=np.array(gt_list),
                    prefix_title='old算法：')
@@ -82,4 +84,7 @@ def run():
 
 
 if __name__ == '__main__':
+    print("验证数据path：", DATA_C_VALI_PATH)
+    time_recorder = TimeRecorder()
+    time_recorder.tick()
     run()
