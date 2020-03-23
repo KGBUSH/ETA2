@@ -84,7 +84,7 @@ def run():
 
 
 if __name__ == '__main__':
-    print("验证数据path：", DATA_C_VALI_PATH)
+    print "验证数据path：", DATA_C_VALI_PATH
     time_recorder = TimeRecorder()
     time_recorder.tick()
     run()
