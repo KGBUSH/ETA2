@@ -89,6 +89,7 @@ class RegressionTrainer(object):
 
 
 if __name__ == "__main__":
+    print "训练path：", DATA_C_TRAIN_PATH
     trainer = RegressionTrainer()
     trainer.run(
         model_type='lgb',

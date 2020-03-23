@@ -267,6 +267,8 @@ class FeatureExtractorETAc(FeatureExtractor):
                 pass
 
         x_std = self.fea_transformer["dict_vector"].fit_transform(X)
+        final_features = self.fea_transformer["dict_vector"].get_feature_names()
+        print("final features = %s: " % len(final_features), final_features)
         y_std = np.array(Y)
         print('load data finish!')
 
@@ -359,10 +361,11 @@ class FeatureExtractorETAc(FeatureExtractor):
         """
         添加其他加工之后的特征
         """
+        # 时间地址
         hour = pd.Timestamp(items[ETA_C_COLUMNS_DICT["finish_time"]], unit='s', tz='Asia/Shanghai').hour
         # weekday = pd.Timestamp(items[ETA_C_COLUMNS_DICT["finish_time"]], unit='s', tz='Asia/Shanghai').dayofweek
         receiver_address_char_num = items[ETA_C_COLUMNS_DICT["receiver_address"]].__len__()
-        feature_selected['onehot']['hour'] = hour
+        feature_selected['onehot']['hour'] = str(hour)  # one-hot必须要是str类型
         feature_selected['normal']['receiver_address_char_num'] = receiver_address_char_num
 
         # # 几楼  (这个特征没啥用了，由于疫情)
