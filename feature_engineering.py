@@ -76,7 +76,7 @@ class NormalEncoder(Encoder):
 class FeatureBase(object):
     def __init__(self):
         self.fea_transformer = {
-            "dict_vector": DictVectorizer(),
+            "dict_vector": DictVectorizer(),  # inference的时候即便缺少特征也可以.transform(X)，特征
             "fea_mapping": {}
         }
         self.normal_encoder = NormalEncoder()
@@ -333,8 +333,8 @@ class FeatureExtractorETAc(FeatureExtractor):
                 "t_history_order_num": float(items[ETA_C_COLUMNS_DICT["t_history_order_num"]]),
                 "t_avg_a1_time": float(items[ETA_C_COLUMNS_DICT["t_avg_a1_time"]]),
                 "t_avg_a2_time": float(items[ETA_C_COLUMNS_DICT["t_avg_a2_time"]]),
-                "delivery_cnt": float(items[ETA_C_COLUMNS_DICT["delivery_cnt"]]),
 
+                "delivery_cnt": float(items[ETA_C_COLUMNS_DICT["delivery_cnt"]]),
                 # "avg_delivery_time1": float(items[ETA_C_COLUMNS_DICT["avg_delivery_time1"]]),
                 "avg_delivery_time2": float(items[ETA_C_COLUMNS_DICT["avg_delivery_time2"]]),
                 # "per_delivery_time1": float(items[ETA_C_COLUMNS_DICT["per_delivery_time1"]]),
@@ -368,7 +368,7 @@ class FeatureExtractorETAc(FeatureExtractor):
         feature_selected['onehot']['hour'] = str(hour)  # one-hot必须要是str类型
         feature_selected['normal']['receiver_address_char_num'] = receiver_address_char_num
 
-        # # 几楼  (这个特征没啥用了，由于疫情)
+        # # 几楼  (这个特征没啥用了，由于新冠疫情)
         # build = ETABuildingRecognizer()
         # floor = build.get_building_floor(items[ETA_C_COLUMNS_DICT["receiver_address"]])
         # is_floor_over6 = 1 if floor > 6 else 0
