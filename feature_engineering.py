@@ -334,19 +334,19 @@ class FeatureExtractorETAc(FeatureExtractor):
                 "t_avg_a1_time": float(items[ETA_C_COLUMNS_DICT["t_avg_a1_time"]]),
                 "t_avg_a2_time": float(items[ETA_C_COLUMNS_DICT["t_avg_a2_time"]]),
 
-                "delivery_cnt": float(items[ETA_C_COLUMNS_DICT["delivery_cnt"]]),
-                # "avg_delivery_time1": float(items[ETA_C_COLUMNS_DICT["avg_delivery_time1"]]),
-                "avg_delivery_time2": float(items[ETA_C_COLUMNS_DICT["avg_delivery_time2"]]),
-                # "per_delivery_time1": float(items[ETA_C_COLUMNS_DICT["per_delivery_time1"]]),
-                "per_delivery_time2": float(items[ETA_C_COLUMNS_DICT["per_delivery_time2"]]),
-                "cnt_peek1": float(items[ETA_C_COLUMNS_DICT["cnt_peek1"]]),
-                "cnt_peek2": float(items[ETA_C_COLUMNS_DICT["cnt_peek2"]]),
-                "cnt_peek3": float(items[ETA_C_COLUMNS_DICT["cnt_peek3"]]),
-                "cnt_peek0": float(items[ETA_C_COLUMNS_DICT["cnt_peek0"]]),
-                "per_delivery_time_peek1": float(items[ETA_C_COLUMNS_DICT["per_delivery_time_peek1"]]),
-                "per_delivery_time_peek2": float(items[ETA_C_COLUMNS_DICT["per_delivery_time_peek2"]]),
-                "per_delivery_time_peek3": float(items[ETA_C_COLUMNS_DICT["per_delivery_time_peek3"]]),
-                "per_delivery_time_peek0": float(items[ETA_C_COLUMNS_DICT["per_delivery_time_peek0"]]),
+                "delivery_cnt": int(float(items[ETA_C_COLUMNS_DICT["delivery_cnt"]])),
+                # "avg_delivery_time1": int(float(items[ETA_C_COLUMNS_DICT["avg_delivery_time1"]])),
+                "avg_delivery_time2": int(float(items[ETA_C_COLUMNS_DICT["avg_delivery_time2"]])),
+                # "per_delivery_time1": int(float(items[ETA_C_COLUMNS_DICT["per_delivery_time1"]])),
+                "per_delivery_time2": int(float(items[ETA_C_COLUMNS_DICT["per_delivery_time2"]])),
+                "cnt_peek1": int(float(items[ETA_C_COLUMNS_DICT["cnt_peek1"]])),
+                "cnt_peek2": int(float(items[ETA_C_COLUMNS_DICT["cnt_peek2"]])),
+                "cnt_peek3": int(float(items[ETA_C_COLUMNS_DICT["cnt_peek3"]])),
+                "cnt_peek0": int(float(items[ETA_C_COLUMNS_DICT["cnt_peek0"]])),
+                "per_delivery_time_peek1": int(float(items[ETA_C_COLUMNS_DICT["per_delivery_time_peek1"]])),
+                "per_delivery_time_peek2": int(float(items[ETA_C_COLUMNS_DICT["per_delivery_time_peek2"]])),
+                "per_delivery_time_peek3": int(float(items[ETA_C_COLUMNS_DICT["per_delivery_time_peek3"]])),
+                "per_delivery_time_peek0": int(float(items[ETA_C_COLUMNS_DICT["per_delivery_time_peek0"]])),
             }
         }
 
@@ -362,11 +362,11 @@ class FeatureExtractorETAc(FeatureExtractor):
         添加其他加工之后的特征
         """
         # 时间地址
-        hour = pd.Timestamp(items[ETA_C_COLUMNS_DICT["finish_time"]], unit='s', tz='Asia/Shanghai').hour
+        hour = pd.Timestamp(items[ETA_C_COLUMNS_DICT["finish_time"]]).hour
         # weekday = pd.Timestamp(items[ETA_C_COLUMNS_DICT["finish_time"]], unit='s', tz='Asia/Shanghai').dayofweek
-        receiver_address_char_num = items[ETA_C_COLUMNS_DICT["receiver_address"]].__len__()
+        receiver_address_char_num = unicode(items[ETA_C_COLUMNS_DICT["receiver_address"]], 'utf-8').__len__()
         feature_selected['onehot']['hour'] = str(hour)  # one-hot必须要是str类型
-        feature_selected['normal']['receiver_address_char_num'] = receiver_address_char_num
+        # feature_selected['normal']['receiver_address_char_num'] = receiver_address_char_num
 
         # # 几楼  (这个特征没啥用了，由于新冠疫情)
         # build = ETABuildingRecognizer()
