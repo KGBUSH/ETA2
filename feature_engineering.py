@@ -382,9 +382,7 @@ class FeatureExtractorETAc(FeatureExtractor):
         """
         current 那两个特征
         """
-        now_hour = feature_selected['onehot']['hour']
-        current_cnt_peek = -1
-        current_per_delivery_time_peek = -1
+        now_hour = int(feature_selected['onehot']['hour'])  # 装的是str
         if (11 <= now_hour < 13) or (18 <= now_hour < 20):
             current_cnt_peek = feature_selected['normal']['cnt_peek1']
             current_per_delivery_time_peek = feature_selected['normal']['per_delivery_time_peek1']
