@@ -1,5 +1,13 @@
 # -*- coding: utf-8 -*-
+"""
+从hive 上下载数据
 
+92062条数据
+hive -e 'SELECT * FROM algo_test.dy_eta_c_vali_10;' > /data/dengyang/projects/dataFromEsql/eta_c_0323to0325_at0325.csv
+
+
+
+"""
 
 from .default import *
 
