@@ -4,10 +4,13 @@
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
-from utils.basic_utils import load_object, save_object, error_analysis
 from sklearn.feature_extraction import DictVectorizer
+
+from utils.basic_utils import load_object, save_object, error_analysis
 from analyze_c.feature import ETA_C_COLUMNS_DICT
+from analyze_a.feature import ETA_A_COLUMNS_DICT
 from utils.building_re_utils import ETABuildingRecognizer
+import config
 
 BASE_FEATURE_DICT = {
     'transporter_id': 0,  # 没有用了
@@ -96,6 +99,7 @@ class FeatureExtractor(FeatureBase):
             # "cargo_type_id": "earning"
         }
         self.need_norm = True
+        self.invalid_field_replace = '-1'
 
     def load(self, sample_file, limit_num=1e5):
         X = []
@@ -232,7 +236,6 @@ class FeatureExtractorETAc(FeatureExtractor):
         self.need_norm = False
         self.label_choose = 'delivery_time2'
         self.old_label = 'percentile_delivery_time_poi'
-        self.invalid_field_replace = -1
 
     # def evaluate_old(self):
     #     old = [item[self.old_label] for item in ]
@@ -289,8 +292,9 @@ class FeatureExtractorETAc(FeatureExtractor):
             else:
                 print line
 
-            line = line.replace('NULL', '-1').replace('Null', '-1').replace('None', '-1')
-
+            line = line.replace('NULL', self.invalid_field_replace) \
+                .replace('Null', self.invalid_field_replace) \
+                .replace('None', self.invalid_field_replace)
             items = line.strip().split(sep)
 
             # origin state
@@ -398,4 +402,165 @@ class FeatureExtractorETAc(FeatureExtractor):
 
         feature_selected['normal']['current_cnt_peek'] = current_cnt_peek
         feature_selected['normal']['current_per_delivery_time_peek'] = current_per_delivery_time_peek
+        return feature_selected
+
+
+class FeatureExtractorETAa(FeatureExtractor):
+    """
+    ETA A 段
+    包含 a1, a2
+    """
+    dada_speed_map = config.ETA_DADA_SPEED_CITY_GROUP
+    default_dada_speed = dada_speed_map.get(0, 4.5)
+
+    def __init__(self):
+        FeatureExtractor.__init__(self)
+        self.need_norm = False
+        self.label_choose_a1 = 'a1_time'
+        self.label_choose_a2 = 'a2_time'
+        self.old_label_a1 = 'old_a1'
+        self.old_label_a2 = 'old_a2'
+
+    def load(self, sample_file, limit_num=1e5):
+        X = []
+        Y = []
+        counter = 0  # 记录源文件读了多少行，并不代表有效数据行数
+        with open(sample_file, 'r') as fr:
+            lines_num = len(fr.readlines())
+        if limit_num == -1:
+            limit_num = lines_num
+
+        sample_f = open(sample_file, 'r')
+        print("load samples from %s ... ..." % sample_file)
+        for i in tqdm(range(int(limit_num))):
+            line = sample_f.readline()
+            line = line.strip()
+            if line == '':
+                break
+            try:
+                fea_std_list, goal_list = self.process_line(line, use_expand=False)
+                for fea in fea_std_list:
+                    X.append(fea)
+                for goal in goal_list:
+                    Y.append(goal)
+                counter += 1
+                if counter > limit_num:
+                    break
+            except Exception as e:
+                print(e)
+                pass
+
+        x_std = self.fea_transformer["dict_vector"].fit_transform(X)
+        final_features = self.fea_transformer["dict_vector"].get_feature_names()
+        print("final features = %s: " % len(final_features), final_features)
+        y_std = np.array(Y)
+        print('load data finish!')
+
+        # 评估老算法
+        all_old_a1 = pd.DataFrame(X).loc[:, self.old_label_a1]  # todo
+        all_old_a2 = pd.DataFrame(X).loc[:, self.old_label_a2]
+        error_analysis(predict=all_old_a1, ground_truth_vec=y_std[:, 0], prefix_title='old_A:a1')
+        error_analysis(predict=all_old_a2, ground_truth_vec=y_std[:, 1], prefix_title='old_A:a2')
+
+        return x_std, y_std
+
+    def process_line(self, line, is_multi_class=False, use_expand=True):
+        """
+        return: fea_std_list, goal_list(a1 和a2的标签都在)
+        """
+        fea_std_list = []
+        goal_list = []
+        try:
+            sep = None
+            if '\t' in line:
+                sep = '\t'
+            elif ',' in line:
+                sep = ','
+            else:
+                print line
+
+            line = line.replace('NULL', self.invalid_field_replace) \
+                .replace('Null', self.invalid_field_replace) \
+                .replace('None', self.invalid_field_replace)
+
+            items = line.strip().split(sep)
+
+            # origin state
+            fea_std = self.get_fea_std(items, is_multi_class)
+            a1_label = float(items[ETA_A_COLUMNS_DICT[self.label_choose_a1]])
+            a2_label = float(items[ETA_A_COLUMNS_DICT[self.label_choose_a2]])
+
+            # 交付时间大于0
+            if a1_label > 0 and a2_label > 0:
+                fea_std_list.append(fea_std)
+                goal_list.append([a1_label, a2_label])
+
+        except Exception as e:
+            # print(e)
+            pass
+        if fea_std_list.__len__() == 0:
+            pass
+        return fea_std_list, goal_list
+
+    def get_fea_selected(self, items, is_multi_class=False):
+        """
+        ETA C段的特征提取
+        :param items:
+        :param is_multi_class:
+        :return:
+        """
+        # items 里面已有的先填入
+        feature_selected = {
+            "onehot": {
+                "cargo_type_id": str(items[ETA_A_COLUMNS_DICT["cargo_type_id"]]),
+                "city_id": str(items[ETA_A_COLUMNS_DICT["city_id"]]),
+            },
+            "normal": {
+                "real_time_line_distance": float(items[ETA_A_COLUMNS_DICT["real_time_line_distance"]]),
+                "t_history_order_num": float(items[ETA_A_COLUMNS_DICT["t_history_order_num"]]),
+                "t_avg_a1_time": float(items[ETA_A_COLUMNS_DICT["t_avg_a1_time"]]),
+                "t_avg_a2_time": float(items[ETA_A_COLUMNS_DICT["t_avg_a2_time"]]),
+                "s_history_order_num": float(items[ETA_A_COLUMNS_DICT["s_history_order_num"]]),
+                "s_avg_a1_time": float(items[ETA_A_COLUMNS_DICT["s_avg_a1_time"]]),
+                "s_avg_a2_time": float(items[ETA_A_COLUMNS_DICT["s_avg_a2_time"]]),
+                "cargo_weight": float(items[ETA_A_COLUMNS_DICT["cargo_weight"]]),
+            }
+        }
+
+        # 一些需要加工的特征
+        feature_selected = FeatureExtractorETAa.add_other_basic_features(feature_selected, items)
+
+        return feature_selected
+
+    @staticmethod
+    def add_other_basic_features(feature_selected, items):
+        """
+        添加其他加工之后的特征
+        """
+        # 时间
+        hour = pd.Timestamp(items[ETA_A_COLUMNS_DICT["finish_time"]]).hour
+        weekday = pd.Timestamp(items[ETA_A_COLUMNS_DICT["finish_time"]]).dayofweek
+        is_weekend = 1 if weekday > 4 else 0
+        feature_selected['onehot']['hour'] = str(hour)  # one-hot必须要是str类型
+        feature_selected['onehot']['weekday'] = str(weekday)
+        feature_selected['onehot']['is_weekend'] = str(is_weekend)
+
+        return feature_selected
+
+    @staticmethod
+    def add_old_results_as_features(feature_selected, items):
+        """
+        添加其他加工之后的特征
+        """
+        # old a1: 直线距离 / speed
+        real_time_line_distance = feature_selected['normal']['real_time_line_distance']
+        city_id = feature_selected['onehot']['city_id']
+        dada_speed = FeatureExtractorETAa.dada_speed_map.get(int(city_id),
+                                                             FeatureExtractorETAa.default_dada_speed)
+        old_a1 = real_time_line_distance / dada_speed
+        feature_selected['normal']['old_a1'] = old_a1
+
+        # old a2: 商户的平均取货时间
+        feature_selected['normal']['old_a2'] = feature_selected['normal']['s_avg_a2_time']
+
         return feature_selected

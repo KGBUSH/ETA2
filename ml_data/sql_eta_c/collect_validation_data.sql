@@ -13,8 +13,8 @@ set hive.exec.max.dynamic.partitions.pernode=2000;
 
 
 -- 1. 捞出order单，拿出C段，和coord合并
-#define label='指定开始时间',${data_dt1}='2020-03-16';  --两个时间范围：大于等于和小于等于
-#define label='指定结束时间',${data_dt2}='2020-03-19';
+#define label='指定开始时间',${data_dt1}='2020-03-23';  --两个时间范围：大于等于和小于等于
+#define label='指定结束时间',${data_dt2}='2020-03-25';
 #define label='进圈距离',${distance}=80;  --学坤订的50米参数
 -- distinct order_id's count=51738
 drop table algo_test.dy_eta_c_vali_01;
@@ -100,7 +100,8 @@ WHERE
   --AND B.log_time > A.finish_time_unix - { delta_time } -- 1 为什么要设置一个delta？
   AND B.log_time > A.fetch_time_unix -- 取货之后
   AND B.log_time <= A.finish_time_unix + 120; --交付之前！！！！所以就没办法，直接去掉这个条件，就可以用进圈出圈了
-
+select count(*) as c1, count(distinct(order_id)) as cd1
+from algo_test.dy_eta_c_vali_01;
 
 
 
@@ -455,3 +456,7 @@ select
   count(*) as c10
 from
   algo_test.dy_eta_c_vali_10;
+
+select
+  min(finish_time) as min_finish_time, max(finish_time) as max_finish_time
+from algo_test.dy_eta_c_vali_10;

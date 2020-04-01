@@ -269,6 +269,40 @@ select count(*) as c5, count(distinct(transporter_id)) as cd5
 from algo_test.dy_eta_c_05_peek;
 
 
+-- 和线上数据库对齐, 有些字段补齐，用-1填充，训练验证还是可以用上面的5表
+drop table algo_test.dy_eta_c_05v2_peek;
+create table algo_test.dy_eta_c_05v2_peek AS
+select
+  a.id,
+  a.transporter_id,
+  a.city_id,
+  a.delivery_cnt,
+  -1 as avg_delivery_time1,
+  a.avg_delivery_time2,
+  -1 as per_delivery_time1,
+  a.per_delivery_time2,
+  a.cnt_peek1,
+  a.cnt_peek2,
+  a.cnt_peek3,
+  a.cnt_peek0,
+  -1 as per_delivery_time1_peek1,
+  -1 as per_delivery_time1_peek2,
+  -1 as per_delivery_time1_peek3,
+  -1 as per_delivery_time1_peek0,
+  a.per_delivery_time_peek1,
+  a.per_delivery_time_peek2,
+  a.per_delivery_time_peek3,
+  a.per_delivery_time_peek0,
+  a.create_time,
+  a.update_time
+from
+  (
+    select
+      *
+    from
+      algo_test.dy_eta_c_05_peek
+  ) a;
+
 --6.  订单绑定到POI信息
 drop table algo_test.dy_eta_c_06;
 create table algo_test.dy_eta_c_06 as
