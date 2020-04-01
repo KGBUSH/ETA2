@@ -464,6 +464,47 @@ class FeatureExtractorETAa(FeatureExtractor):
 
         return x_std, y_std
 
+    def load_for_inference(self, sample_file):
+        """
+        加载文件内容，用已有的特征transformer转换成稀疏编码
+        """
+        X = []
+        Y = []
+        counter = 0  # 记录源文件读了多少行，并不代表有效数据行数
+        with open(sample_file, 'r') as fr:
+            lines_num = len(fr.readlines())
+
+        sample_f = open(sample_file, 'r')
+        print("load samples from %s ... ..." % sample_file)
+        for i in tqdm(range(int(lines_num))):
+            line = sample_f.readline()
+            line = line.strip()
+            if line == '':
+                break
+            try:
+                fea_std_list, goal_list = self.process_line(line, use_expand=False)
+                for fea in fea_std_list:
+                    X.append(fea)
+                for goal in goal_list:
+                    Y.append(goal)
+            except Exception as e:
+                print(e)
+                pass
+
+        x_std = self.fea_transformer["dict_vector"].transform(X)
+        final_features = self.fea_transformer["dict_vector"].get_feature_names()
+        print("final features = %s: " % len(final_features), final_features)
+        y_std = np.array(Y)
+        print('load data finish!')
+
+        # 评估老算法
+        all_old_a1 = pd.DataFrame(X).loc[:, self.old_label_a1]
+        all_old_a2 = pd.DataFrame(X).loc[:, self.old_label_a2]
+        error_analysis(predict=all_old_a1, ground_truth_vec=y_std[:, 0], prefix_title='old_A:a1')
+        error_analysis(predict=all_old_a2, ground_truth_vec=y_std[:, 1], prefix_title='old_A:a2')
+
+        return x_std, y_std
+
     def process_line(self, line, is_multi_class=False, use_expand=True):
         """
         return: fea_std_list, goal_list(a1 和a2的标签都在)

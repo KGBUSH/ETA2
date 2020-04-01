@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 用新数据（by collect_validation_data.sql）验证模型精度
+读一行 inference一行，非常慢；load整个测试文件用validation2.py
 """
 
 from config import CLASSIFIER_SRC_A_ROOT, DATA_A_VALI_PATH, TRAIN_LIMIT_NUM

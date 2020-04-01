@@ -63,7 +63,8 @@ class RegressionTrainer(object):
 
         # feature importance
         columns_name = self.fea_extractor.fea_transformer["dict_vector"].get_feature_names()
-        plotImp(model=self.model.MODEL, X_col_name=columns_name, model_type=self.model.model_type)
+        export_fea_importance_path = CLASSIFIER_SRC_C_ROOT + "/%s_feature_importance_c.csv" % model_type
+        plotImp(model=self.model.MODEL, X_col_name=columns_name, export_fea_importance_path=export_fea_importance_path)
 
     def load_sample(self, train_file, need_ini, limit_num):
         if need_ini:
