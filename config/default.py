@@ -2,20 +2,20 @@
 
 DEBUG = False
 
+TRAIN_LIMIT_NUM = -1
 
 ################ A ################
+# 训练样本存储位置
+DATA_A_TRAIN_PATH = '/data/dengyang/projects/dataFromEsql/eta_a_0315to0322_at0401.csv'
 
-DATA_A_TRAIN_PATH = ''
-
-
-
+# validation样本存储位置
+DATA_A_VALI_PATH = '/data/dengyang/projects/dataFromEsql/eta_a_0323to0325_at0401.csv'
 
 
 
 ################ C ################
 # 训练样本存储位置
 DATA_C_TRAIN_PATH = "/data/dengyang/projects/dataFromEsql/eta_c_0301to0315_at0319.csv"  # 157的路径
-TRAIN_LIMIT_NUM = -1
 
 
 # validation样本存储位置

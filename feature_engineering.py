@@ -457,7 +457,7 @@ class FeatureExtractorETAa(FeatureExtractor):
         print('load data finish!')
 
         # 评估老算法
-        all_old_a1 = pd.DataFrame(X).loc[:, self.old_label_a1]  # todo
+        all_old_a1 = pd.DataFrame(X).loc[:, self.old_label_a1]
         all_old_a2 = pd.DataFrame(X).loc[:, self.old_label_a2]
         error_analysis(predict=all_old_a1, ground_truth_vec=y_std[:, 0], prefix_title='old_A:a1')
         error_analysis(predict=all_old_a2, ground_truth_vec=y_std[:, 1], prefix_title='old_A:a2')
@@ -499,6 +499,7 @@ class FeatureExtractorETAa(FeatureExtractor):
             # print(e)
             pass
         if fea_std_list.__len__() == 0:
+            aa=1
             pass
         return fea_std_list, goal_list
 
@@ -529,6 +530,7 @@ class FeatureExtractorETAa(FeatureExtractor):
 
         # 一些需要加工的特征
         feature_selected = FeatureExtractorETAa.add_other_basic_features(feature_selected, items)
+        feature_selected = FeatureExtractorETAa.add_old_results_as_features(feature_selected)
 
         return feature_selected
 
@@ -545,12 +547,17 @@ class FeatureExtractorETAa(FeatureExtractor):
         feature_selected['onehot']['weekday'] = str(weekday)
         feature_selected['onehot']['is_weekend'] = str(is_weekend)
 
+        real_time_line_distance = feature_selected['normal']['real_time_line_distance']
+        feature_selected['onehot']['is_over200m'] = '1' if real_time_line_distance > 200 else '0'
+        feature_selected['onehot']['is_over20m'] = '1' if real_time_line_distance > 20 else '0'
+
+
         return feature_selected
 
     @staticmethod
-    def add_old_results_as_features(feature_selected, items):
+    def add_old_results_as_features(feature_selected):
         """
-        添加其他加工之后的特征
+        添加老算法结果特征
         """
         # old a1: 直线距离 / speed
         real_time_line_distance = feature_selected['normal']['real_time_line_distance']

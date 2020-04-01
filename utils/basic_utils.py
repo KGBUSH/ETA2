@@ -117,6 +117,11 @@ def error_analysis(predict, ground_truth_vec=None, prefix_title=''):
     :return:
     """
     error_vec = np.abs(predict - ground_truth_vec)
+    t = np.zeros((predict.shape[0], 3))
+    t[:, 0] = predict
+    t[:, 1] = ground_truth_vec
+    t[:, 2] = error_vec
+
     e50 = round(np.percentile(error_vec, 50), 1)
     e67 = round(np.percentile(error_vec, 67), 1)
     e80 = round(np.percentile(error_vec, 80), 1)

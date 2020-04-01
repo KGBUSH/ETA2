@@ -75,7 +75,7 @@ from
               delivery_id,
               transporter_id,
               supplier_id,
-              distance,
+              distance,  -- 骑行距离，发单的时候调了高德或者百度算的
               cargo_type_id,
               accept_time,
               unix_timestamp(accept_time, 'yyyy-MM-dd HH:mm:ss') as accept_time_unix,

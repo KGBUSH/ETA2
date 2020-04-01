@@ -35,8 +35,19 @@ class RegressionTrainer(object):
                                                                                 self.y_train,
                                                                                 test_size=0.2,
                                                                                 random_state=40)
-        print("-" * 50 + "START TRAIN" + "-" * 50)
+        print("\n\n\n\n" + "-" * 50 + "START TRAIN" + "-" * 50)
 
+        self.train_a1_or_a2(a1_or_a2='a1', model_type=model_type)
+        self.train_a1_or_a2(a1_or_a2='a2', model_type=model_type)
+
+    def train_a1_or_a2(self, a1_or_a2, model_type):
+        """
+        a1或者a2的训练
+        :return:
+        """
+        assert a1_or_a2 == 'a1' or a1_or_a2 == 'a2'
+        print("\n\n\n\n" + "-" * 50 + a1_or_a2 + "-" * 50)
+        y_flag = 0 if a1_or_a2 == 'a1' else 1  # 因为y是(n, 2)维矩阵，训练的时候要选是a1 还是a2
         # choose model
         if model_type == "lgb":
             self.model = LgbRegressionModel()
@@ -45,20 +56,18 @@ class RegressionTrainer(object):
 
         # train
         self.time_recorder.tock("train started !")
-        train_num, train_dim, train_pos, train_neg = self.model.train(self.x_train, self.y_train)
+        train_num, train_dim, train_pos, train_neg = self.model.train(self.x_train, self.y_train[:, y_flag])
         self.time_recorder.tock("train finished !")
 
         # save model
-        model_path = CLASSIFIER_SRC_A_ROOT + "/%s_model.pkl" % model_type
+        model_path = CLASSIFIER_SRC_A_ROOT + "/%s_model_%s.pkl" % (model_type, a1_or_a2)
         self.model.save_model(model_path)
 
         # test
-        y_pred = self.model.test(self.x_test, self.y_test)
-        error_analysis(predict=y_pred, ground_truth_vec=self.y_test,
-                       prefix_title='ETA_C test data')
-        y_pred_train = self.model.test(self.x_train, self.y_train)
-        error_analysis(predict=y_pred_train, ground_truth_vec=self.y_train,
-                       prefix_title='ETA_C train data')
+        y_pred = self.model.test(self.x_test, self.y_test[:, y_flag])
+        error_analysis(predict=y_pred, ground_truth_vec=self.y_test[:, y_flag], prefix_title='ETA_A_%s test data' % a1_or_a2)
+        y_pred_train = self.model.test(self.x_train, self.y_train[:, y_flag])  # 检查过拟合情况
+        error_analysis(predict=y_pred_train, ground_truth_vec=self.y_train[:, y_flag], prefix_title='ETA_A_%s train data' % a1_or_a2)
         self.time_recorder.tock("test finished !")
 
         # feature importance
