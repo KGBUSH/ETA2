@@ -464,10 +464,14 @@ class FeatureExtractorETAa(FeatureExtractor):
 
         return x_std, y_std
 
-    def load_for_inference(self, sample_file):
+    def load_for_inference(self, sample_file, short_distance=None):
         """
         加载文件内容，用已有的特征transformer转换成稀疏编码
+        如果传入short_distance，则该load函数只输出short_dist以内的样本
+        return: x_std -> scipy.sparse.csr.csr_matrix
+                y_std -> numpy.ndarray
         """
+        # 1. 按行load文件
         X = []
         Y = []
         counter = 0  # 记录源文件读了多少行，并不代表有效数据行数
@@ -491,17 +495,35 @@ class FeatureExtractorETAa(FeatureExtractor):
                 print(e)
                 pass
 
-        x_std = self.fea_transformer["dict_vector"].transform(X)
-        final_features = self.fea_transformer["dict_vector"].get_feature_names()
-        print("final features = %s: " % len(final_features), final_features)
         y_std = np.array(Y)
         print('load data finish!')
 
-        # 评估老算法
-        all_old_a1 = pd.DataFrame(X).loc[:, self.old_label_a1]
-        all_old_a2 = pd.DataFrame(X).loc[:, self.old_label_a2]
+        # 2. 评估老算法
+        # 2.1. 汇总测试
+        X = pd.DataFrame(X)
+        all_old_a1 = X.loc[:, self.old_label_a1]
+        all_old_a2 = X.loc[:, self.old_label_a2]
         error_analysis(predict=all_old_a1, ground_truth_vec=y_std[:, 0], prefix_title='old_A:a1')
         error_analysis(predict=all_old_a2, ground_truth_vec=y_std[:, 1], prefix_title='old_A:a2')
+
+        # 2.2. 短距离测试
+        if short_distance:
+            short_dist = short_distance if short_distance is not None else 100000
+            index = X.real_time_line_distance < short_dist
+            error_analysis(predict=X.loc[index, self.old_label_a1], ground_truth_vec=y_std[index, 0],
+                           prefix_title='short distance=%sm old_A:a1' % short_dist)
+            error_analysis(predict=X.loc[index, self.old_label_a2], ground_truth_vec=y_std[index, 1],
+                           prefix_title='short distance=%sm old_A:a2' % short_dist)
+
+        # 3. 稀疏存储 X
+        index = range(X.shape[0])
+        if short_distance:
+            index = X.real_time_line_distance <= short_distance
+            X = X.loc[index, :].reset_index(drop=True)
+            y_std = y_std[index, :]
+        x_std = self.fea_transformer["dict_vector"].transform(X.to_dict(orient='records'))  # pandas 转dict再转稀疏矩阵
+        final_features = self.fea_transformer["dict_vector"].get_feature_names()
+        print("final features = %s: " % len(final_features), final_features)
 
         return x_std, y_std
 
@@ -556,6 +578,7 @@ class FeatureExtractorETAa(FeatureExtractor):
             "onehot": {
                 "cargo_type_id": str(items[ETA_A_COLUMNS_DICT["cargo_type_id"]]),
                 "city_id": str(items[ETA_A_COLUMNS_DICT["city_id"]]),
+                "supplier_id": str(items[ETA_A_COLUMNS_DICT["supplier_id"]]),
             },
             "normal": {
                 "real_time_line_distance": float(items[ETA_A_COLUMNS_DICT["real_time_line_distance"]]),

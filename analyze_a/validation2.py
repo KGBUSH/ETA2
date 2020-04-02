@@ -4,7 +4,7 @@
 用新数据（by collect_validation_data.sql）验证模型精度
 """
 
-from config import CLASSIFIER_SRC_A_ROOT, DATA_A_VALI_PATH, TRAIN_LIMIT_NUM
+from config import CLASSIFIER_SRC_A_ROOT, DATA_A_VALI_PATH, TRAIN_LIMIT_NUM, SHORT_DISTANCE
 from feature_engineering import FeatureExtractorETAa, NormalEncoder
 from utils.basic_utils import TimeRecorder, save_object, load_object, \
     error_analysis, plotImp
@@ -22,8 +22,8 @@ class EtaAPredictModel(object):
         self.MODEL_A2 = load_object(model_path_a2)
 
 
-def test():
-    time_recorder.tock("Test started !")
+def test(short_distance=None):
+    time_recorder.tock("\n\n\nTest started ! (short_distance = %s)" % short_distance)
     data_path = DATA_A_VALI_PATH
 
     fea_transformer_path = os.path.join(CLASSIFIER_SRC_A_ROOT, 'lgb_fea_preprocess.pkl')
@@ -36,7 +36,7 @@ def test():
         model_path_a2=model_path_a2
     )
 
-    x_std, gt_list = model.feature_extractor.load_for_inference(sample_file=data_path)
+    x_std, gt_list = model.feature_extractor.load_for_inference(sample_file=data_path, short_distance=short_distance)
     y_predict_a1 = model.MODEL_A1.predict(x_std)
     y_predict_a1 = NormalEncoder.skewness_recover(y_predict_a1)  # 偏态校正回来
     y_predict_a2 = model.MODEL_A2.predict(x_std)
@@ -45,16 +45,17 @@ def test():
 
     error_analysis(predict=y_predict_a1,
                    ground_truth_vec=gt_list[:, 0],
-                   prefix_title='a1 离线验证：')
+                   prefix_title='short distance=%sm a1 离线验证：' % short_distance)
     error_analysis(predict=y_predict_a2,
                    ground_truth_vec=gt_list[:, 1],
-                   prefix_title='a2 离线验证：')
+                   prefix_title='short distance=%sm a2 离线验证：' % short_distance)
 
 
 def run():
     # load_data()
     # load_data_update()
     test()
+    test(short_distance=SHORT_DISTANCE)
 
 
 if __name__ == '__main__':
