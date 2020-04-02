@@ -578,7 +578,7 @@ class FeatureExtractorETAa(FeatureExtractor):
             "onehot": {
                 "cargo_type_id": str(items[ETA_A_COLUMNS_DICT["cargo_type_id"]]),
                 "city_id": str(items[ETA_A_COLUMNS_DICT["city_id"]]),
-                "supplier_id": str(items[ETA_A_COLUMNS_DICT["supplier_id"]]),
+                # "supplier_id": str(items[ETA_A_COLUMNS_DICT["supplier_id"]]),  # 没啥鸟用
             },
             "normal": {
                 "real_time_line_distance": float(items[ETA_A_COLUMNS_DICT["real_time_line_distance"]]),

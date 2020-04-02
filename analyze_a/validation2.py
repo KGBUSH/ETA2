@@ -2,6 +2,8 @@
 """
 整个文件一起inference
 用新数据（by collect_validation_data.sql）验证模型精度
+
+通过全局变量传入 SHORT_DISTANCE，测试短距离的精度
 """
 
 from config import CLASSIFIER_SRC_A_ROOT, DATA_A_VALI_PATH, TRAIN_LIMIT_NUM, SHORT_DISTANCE
