@@ -452,7 +452,7 @@ class FeatureExtractorETAa(FeatureExtractor):
 
         x_std = self.fea_transformer["dict_vector"].fit_transform(X)
         final_features = self.fea_transformer["dict_vector"].get_feature_names()
-        print("final features = %s: " % len(final_features), final_features)
+        print("final features = %s: " % len(final_features))
         y_std = np.array(Y)
         print('load data finish!')
 
@@ -523,7 +523,7 @@ class FeatureExtractorETAa(FeatureExtractor):
             y_std = y_std[index, :]
         x_std = self.fea_transformer["dict_vector"].transform(X.to_dict(orient='records'))  # pandas 转dict再转稀疏矩阵
         final_features = self.fea_transformer["dict_vector"].get_feature_names()
-        print("final features = %s: " % len(final_features), final_features)
+        print("final features = %s: " % len(final_features))
 
         return x_std, y_std
 
