@@ -53,7 +53,7 @@ class TimeRecorder(object):
         now = time.time()
         elpased = now - self.tick_time
         self.tick_time = now
-        print("[%s] used time : %8.2fs" % (process_name, elpased))
+        print("\n\n[%s] used time : %8.2fs" % (process_name, elpased))
 
 
 def sample_balance(X, Y):

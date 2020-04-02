@@ -23,7 +23,7 @@ class EtaAPredictModel(object):
 
 
 def test(short_distance=None):
-    time_recorder.tock("\n\n\nTest started ! (short_distance = %s)" % short_distance)
+    time_recorder.tock("Test started ! (short_distance = %s)" % short_distance)
     data_path = DATA_A_VALI_PATH
 
     fea_transformer_path = os.path.join(CLASSIFIER_SRC_A_ROOT, 'lgb_fea_preprocess.pkl')

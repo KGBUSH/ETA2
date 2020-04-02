@@ -200,7 +200,7 @@ class LgbRegressionModel(Model):
         return sample_num, dimension, pos, neg
 
     def test(self, x_test, y_test):
-        print("\n\n" + "-" * 100 + "TEST")
+        print("\n" + "-" * 100 + "TEST")
         title = "%-20s\t%-20s\t%-20s\t%-20s" % ("num", "dimension", "pos", "neg")
         print(title)
         fmt = "%-20d\t%-20d\t%-20d\t%-20d"
