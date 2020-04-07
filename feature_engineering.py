@@ -235,7 +235,7 @@ class FeatureExtractorETAc(FeatureExtractor):
         FeatureExtractor.__init__(self)
         self.need_norm = False
         self.label_choose = 'delivery_time2'
-        self.old_label = 'percentile_delivery_time_poi'
+        self.old_label_c = 'percentile_delivery_time_poi'
 
     # def evaluate_old(self):
     #     old = [item[self.old_label] for item in ]
@@ -276,8 +276,55 @@ class FeatureExtractorETAc(FeatureExtractor):
         print('load data finish!')
 
         # 评估老算法
-        old = pd.DataFrame(X).loc[:, self.old_label]
+        old = pd.DataFrame(X).loc[:, self.old_label_c]
         error_analysis(predict=old, ground_truth_vec=y_std, prefix_title='old_C')
+        return x_std, y_std
+
+    def load_for_inference(self, sample_file):
+        """
+        * 推理阶段用这个函数（整个测试文件加载进来）
+        加载文件内容，用已有的特征transformer转换成稀疏编码
+        如果传入short_distance，则该load函数只输出short_dist以内的样本
+        return: x_std -> scipy.sparse.csr.csr_matrix
+                y_std -> numpy.ndarray
+        """
+        # 1. 按行load文件
+        X = []
+        Y = []
+        counter = 0  # 记录源文件读了多少行，并不代表有效数据行数
+        with open(sample_file, 'r') as fr:
+            lines_num = len(fr.readlines())
+
+        sample_f = open(sample_file, 'r')
+        print("load samples from %s ... ..." % sample_file)
+        for i in tqdm(range(int(lines_num))):
+            line = sample_f.readline()
+            line = line.strip()
+            if line == '':
+                break
+            try:
+                fea_std_list, goal_list = self.process_line(line, use_expand=False)
+                for fea in fea_std_list:
+                    X.append(fea)
+                for goal in goal_list:
+                    Y.append(goal)
+            except Exception as e:
+                print(e)
+                pass
+
+        y_std = np.array(Y)
+        print('load data finish!')
+
+        # 2. 评估老算法
+        X = pd.DataFrame(X)
+        all_old_c = X.loc[:, self.old_label_c]
+        error_analysis(predict=all_old_c, ground_truth_vec=y_std, prefix_title='old_C')
+
+        # 3. 稀疏存储 X
+        x_std = self.fea_transformer["dict_vector"].transform(X.to_dict(orient='records'))  # pandas 转dict再转稀疏矩阵
+        final_features = self.fea_transformer["dict_vector"].get_feature_names()
+        print("final features = %s: " % len(final_features))
+
         return x_std, y_std
 
     def process_line(self, line, is_multi_class=False, use_expand=True):
@@ -563,7 +610,7 @@ class FeatureExtractorETAa(FeatureExtractor):
             # print(e)
             pass
         if fea_std_list.__len__() == 0:
-            aa=1
+            aa = 1
             pass
         return fea_std_list, goal_list
 
@@ -615,7 +662,6 @@ class FeatureExtractorETAa(FeatureExtractor):
         real_time_line_distance = feature_selected['normal']['real_time_line_distance']
         feature_selected['onehot']['is_over200m'] = '1' if real_time_line_distance > 200 else '0'
         feature_selected['onehot']['is_over20m'] = '1' if real_time_line_distance > 20 else '0'
-
 
         return feature_selected
 

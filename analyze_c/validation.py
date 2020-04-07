@@ -30,7 +30,7 @@ class EtaCPredictModel(object):
         fea_std_list, goal_list = self.feature_extractor.process_line(raw_line,
                                                                       is_multi_class=False,
                                                                       use_expand=False)
-        old = fea_std_list[0][self.feature_extractor.old_label]
+        old = fea_std_list[0][self.feature_extractor.old_label_c]
         x_test = self.feature_extractor.fea_transformer["dict_vector"].transform(fea_std_list)  # 也可以用fea_std_list[0],结果完全一样
         y_predict = self.MODEL.predict(x_test)
         y_predict = NormalEncoder.skewness_recover(y_predict)  # 偏态校正回来
