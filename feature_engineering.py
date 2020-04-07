@@ -466,6 +466,7 @@ class FeatureExtractorETAa(FeatureExtractor):
 
     def load_for_inference(self, sample_file, short_distance=None):
         """
+        * 推理阶段用这个函数（整个测试文件加载进来）
         加载文件内容，用已有的特征transformer转换成稀疏编码
         如果传入short_distance，则该load函数只输出short_dist以内的样本
         return: x_std -> scipy.sparse.csr.csr_matrix
