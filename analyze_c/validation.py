@@ -57,6 +57,8 @@ def test():
     err_cnt = 0
     time_recorder.tock("Model loaded !")
     for i in tqdm(range(len(data_info))):
+        if i >= 10000:
+            break
         row_info = data_info[i]
         try:
             y_predict, gt, old = model.validate_one_line(row_info)  # 一个数
