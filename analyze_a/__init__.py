@@ -2,14 +2,10 @@
 
 """
 
-@author: zhenfengjiang
+validation 数据：
+0407~0409 行数	272817
+hive -e 'SELECT * FROM algo_test.dy_eta_a_vali_03;' > /data/dengyang/projects/dataFromEsql/eta_a_0407to0409_at0410.csv
 
-@contact: zhenfengjiang@imdada.cn
 
-@file: __init__.py.py
-
-@time: 2020/3/26 5:15 下午
-
-@desc:
 
 """
