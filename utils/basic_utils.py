@@ -19,7 +19,6 @@ import numpy as np
 from config import DEBUG, CLASSIFIER_SRC_C_ROOT
 
 
-
 def save_object(obj, file_path):
     f = file(file_path, 'wb')
     pickle.dump(obj, f, True)
@@ -104,8 +103,6 @@ def plotImp(model, X_col_name, export_fea_importance_path, num=20):
             num=X_col_name.__len__()))
         plt.tight_layout()
         plt.show()
-
-
 
 
 def error_analysis(predict, ground_truth_vec=None, prefix_title=''):

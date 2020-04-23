@@ -11,6 +11,7 @@ DATA_A_TRAIN_PATH = '/data/dengyang/projects/dataFromEsql/eta_a_0315to0322_at040
 # validation样本存储位置
 DATA_A_VALI_PATH = '/data/dengyang/projects/dataFromEsql/eta_a_0323to0325_at0401.csv'
 DATA_A_VALI_PATH = '/data/dengyang/projects/dataFromEsql/eta_a_0407to0409_at0410.csv'
+DATA_A_VALI_PATH = '/data/dengyang/projects/dataFromEsql/eta_a_0421to0423_at0423.csv'
 
 
 
