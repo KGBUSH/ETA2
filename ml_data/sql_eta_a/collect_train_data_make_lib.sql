@@ -1,11 +1,11 @@
--- ETA C段训练数据，python不会直接运行这个
+-- ETA A段lib，python不会直接运行这个
 -- 主要用于生成那两个库
 
 
 set mapred.max.split.size=100000000;
 set mapred.min.split.size.per.node=100000000;
 set mapred.min.split.size.per.rack=100000000;
-set hive.exec.reducers.bytes.per.reducer=180000000;
+--set hive.exec.reducers.bytes.per.reducer=180000000;
 set hive.exec.parallel=true;
 set hive.auto.convert.join = false;
 set hive.exec.dynamic.partition.mode=nonstrict;
@@ -15,8 +15,8 @@ set hive.exec.max.dynamic.partitions.pernode=2000;
 
 
 -- 1 运单表,时间久，主要用来做历史统计用
-#define label='统计开始时间',${dt1}='2019-12-01';  --之前是半年，现在也用半年，去统计商家和骑手的历史数据
-#define label='统计结束时间',${dt2}='2020-03-15';
+#define label='统计开始时间',${dt1}='2020-01-01';  --之前是半年，现在也用半年，去统计商家和骑手的历史数据
+#define label='统计结束时间',${dt2}='2020-04-01';
 --#define label='city',${city_id}=1;
 drop table algo_test.dy_order_city0;
 create TABLE algo_test.dy_order_city0 AS

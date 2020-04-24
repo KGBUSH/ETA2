@@ -3,7 +3,7 @@
 set mapred.max.split.size=100000000;
 set mapred.min.split.size.per.node=100000000;
 set mapred.min.split.size.per.rack=100000000;
-set hive.exec.reducers.bytes.per.reducer=180000000;
+-- set hive.exec.reducers.bytes.per.reducer=180000000;
 set hive.exec.parallel=true;
 set hive.auto.convert.join = false;
 set hive.exec.dynamic.partition.mode=nonstrict;
@@ -12,8 +12,8 @@ set hive.exec.max.dynamic.partitions.pernode=2000;
 
 
 -- 1 根据振锋的sql，晒出几条supplier的平均pickup时间，和实际接单时间相比
-#define label='订单开始时间',${cal_dt1}='2020-03-15';
-#define label='订单结束时间',${cal_dt2}='2020-03-22';
+#define label='订单开始时间',${cal_dt1}='2020-04-02';
+#define label='订单结束时间',${cal_dt2}='2020-04-08';
 #define label='骑手商家直线距离最小值',${real_time_line_distance_min}=0;
 
 drop table algo_test.dy_eta_a_train_01;

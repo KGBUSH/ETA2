@@ -4,7 +4,7 @@
 set mapred.max.split.size=100000000;
 set mapred.min.split.size.per.node=100000000;
 set mapred.min.split.size.per.rack=100000000;
-set hive.exec.reducers.bytes.per.reducer=180000000;
+-- set hive.exec.reducers.bytes.per.reducer=180000000;
 set hive.exec.parallel=true;
 set hive.auto.convert.join = false;
 set hive.exec.dynamic.partition.mode=nonstrict;
@@ -13,8 +13,8 @@ set hive.exec.max.dynamic.partitions.pernode=2000;
 
 
 -- 1. 捞出order单，拿出C段，和coord合并
-#define label='指定开始时间',${data_dt1}='2020-03-01';
-#define label='指定结束时间',${data_dt2}='2020-03-15';
+#define label='指定开始时间',${data_dt1}='2020-03-20';
+#define label='指定结束时间',${data_dt2}='2020-04-05';
 #define label='进圈距离',${distance}=80;  --学坤订的50米参数
 -- distinct order_id's count=51738
 drop table algo_test.dy_eta_c_train_01;
@@ -62,21 +62,16 @@ from
       city_id,
       create_dt
     from
-      (
-        select
-          a.*
-        from
-          bi_dw.dw_tsp_order a
-        where
-          create_dt >= $ { data_dt1 }
-          AND create_dt <= $ { data_dt2 }
-          AND order_status = 4
-          AND order_source_from != 'jdMall'
-          --AND city_id = 1
-          and unix_timestamp(finish_time, 'yyyy-MM-dd HH:mm:ss') <> 1548950400  --select to_unixtime(CAST('2019-02-01 00:00:00' AS timestamp));
-          and unix_timestamp(fetch_time, 'yyyy-MM-dd HH:mm:ss') <> 1548950400 --and distance > 0  -- order表 没有distance
-          and order_status = 4 --and supplier_type_id != 5 -- 过滤C端用户, 应该要考虑C端用户
-      ) tmp
+      bi_dw.dw_tsp_order a -- 这里的order_id就是 bi_dw.dw_tsp_delivery_order表里面delivery_id都是 28***开头的
+    where
+      create_dt >= $ { data_dt1 }
+      AND create_dt <= $ { data_dt2 }
+      AND order_status = 4
+      AND order_source_from != 'jdMall'
+      --AND city_id = 1
+      and unix_timestamp(finish_time, 'yyyy-MM-dd HH:mm:ss') <> 1548950400 --select to_unixtime(CAST('2019-02-01 00:00:00' AS timestamp));
+      and unix_timestamp(fetch_time, 'yyyy-MM-dd HH:mm:ss') <> 1548950400 --and distance > 0  -- order表 没有distance
+      and order_status = 4 --and supplier_type_id != 5 -- 过滤C端用户, 应该要考虑C端用户
   ) A
   JOIN (
     select

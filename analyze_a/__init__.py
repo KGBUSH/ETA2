@@ -10,4 +10,9 @@ hive -e 'SELECT * FROM algo_test.dy_eta_a_vali_03;' > /data/dengyang/projects/da
 hive -e 'SELECT * FROM algo_test.dy_eta_a_vali_03;' > /data/dengyang/projects/dataFromEsql/eta_a_0421to0423_at0423.csv
 
 
+
+train 数据:
+0402~0408 行数 3026480
+hive -e 'SELECT * FROM algo_test.dy_eta_a_train_03;' > /data/dengyang/projects/dataFromEsql/eta_a_0402to0408_at0424.csv
+
 """

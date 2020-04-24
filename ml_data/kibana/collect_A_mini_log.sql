@@ -1,23 +1,31 @@
--- 验证数据ETA A段，python不会直接运行这个
+-- 1
+-- A段捞日志
+DROP TABLE algo_test.dy_eta_a_mini_01;
+CREATE TABLE algo_test.dy_eta_a_mini_01 AS
+SELECT
+  get_json_object(t1.data, '$.recOrderId') as recOrderId,
+  get_json_object(t1.data, '$.orderId') as orderId,
+  --get_json_object(t1.data, '$.pickupTimeValue') as pickupTimeValue,  -- 这里是str类型
+  CAST(
+    get_json_object(t1.data, '$.pickupTimeValue') as int
+  ) as pickupTimeValue,
+  get_json_object(t1.data, '$.isDowngrade') as isDowngrade,
+  get_json_object(t1.data, '$.test_id') as test_id,
+  get_json_object(t1.data, '$.cityId') as cityId,
+  get_json_object(t1.data, '$.transporterId') as transporterId,
+  get_json_object(t1.data, '$.supplierLat') as supplierLat,
+  get_json_object(t1.data, '$.now_timestamp') as now_timestamp
+FROM
+  dada_log.saaty_biz_log as t1
+WHERE
+  dt = '${data_dt}'  -- 默认是前一天
+  AND biz_type = 10604;
 
-set mapred.max.split.size=100000000;
-set mapred.min.split.size.per.node=100000000;
-set mapred.min.split.size.per.rack=100000000;
--- set hive.exec.reducers.bytes.per.reducer=180000000;
-set hive.exec.parallel=true;
-set hive.auto.convert.join = false;
-set hive.exec.dynamic.partition.mode=nonstrict;
-set hive.exec.max.dynamic.partitions=2000;
-set hive.exec.max.dynamic.partitions.pernode=2000;
 
-
--- 1 根据振锋的sql，晒出几条supplier的平均pickup时间，和实际接单时间相比
-#define label='订单开始时间',${cal_dt1}='2020-04-21';
-#define label='订单结束时间',${cal_dt2}='2020-04-23';
-#define label='骑手商家直线距离最小值',${real_time_line_distance_min}=0;
-
-drop table algo_test.dy_eta_a_vali_01;
-create table algo_test.dy_eta_a_vali_01 as
+-- 2
+-- 捞出真实的数据，其实就是dy_eta_a_vali_01表
+drop table algo_test.dy_eta_a_mini_02;
+create table algo_test.dy_eta_a_mini_02 as
 select
   *
 from
@@ -93,8 +101,8 @@ from
                 from
                   bi_dw.dw_tsp_delivery_order
                 where
-                  create_dt >= $ { cal_dt1 }
-                  and create_dt <= $ { cal_dt2 } --and city_id = $ { city }
+                  create_dt >= date_sub('${data_dt}', 1)
+                  and create_dt <= '${data_dt}'
                   and unix_timestamp(arrive_time, 'yyyy-MM-dd HH:mm:ss') <> -62170185600
                   and unix_timestamp(fetch_time, 'yyyy-MM-dd HH:mm:ss') <> -62170185600
                   and distance > 0
@@ -112,7 +120,6 @@ from
             from
               bi_dw.dw_usr_supplier
             where
-              --city_id = $ { city }
               supplier_type_id != 5 -- 过滤C端用户
               and supplier_lat > 0
               and supplier_lng > 0
@@ -127,8 +134,8 @@ from
         from
           dada_log.coord_log b
         where
-          b.log_dt >= $ { cal_dt1 }
-          and b.log_dt <= $ { cal_dt2 } --and b.cityid = $ { city }
+          b.log_dt >= date_sub('${data_dt}', 1)
+          and b.log_dt <= '${data_dt}'
           and lat > 0
           and lng > 0
       ) coord ON coord.user_id = deli.transporter_id
@@ -143,51 +150,32 @@ where
   and real_time_line_distance < 5000
   and 6 * A1_time > real_time_line_distance;  --过滤掉加速都连直线距离都到不了的
 
-select count(*) as c1_, count(distinct delivery_id) as cd_1
-from algo_test.dy_eta_a_vali_01;  --11961727
 
 
-
-
---2 捞出t->s 直线距离超过real_time_line_distance_min的订单
-drop table algo_test.dy_eta_a_vali_02;
-create TABLE algo_test.dy_eta_a_vali_02 AS
+-- 3
+-- join
+drop table algo_test.dy_eta_a_mini_03;
+create table algo_test.dy_eta_a_mini_03 as
 select
-  *
+  recorderid,
+  orderid,
+  pickuptimevalue,
+  isdowngrade,
+  test_id cityid,
+  transporterid,
+  supplier_id,
+  supplier_type_id,
+  cargo_type_id,
+  accept_time,
+  arrive_time fetch_time,
+  real_time_line_distance,
+  a_time,
+  a1_time,
+  a2_time city_id
 from
-  algo_test.dy_eta_a_vali_01
-where
-  real_time_line_distance >= $ { real_time_line_distance_min };
-select count(*) as c2, count(distinct delivery_id) as cd2
-from algo_test.dy_eta_a_vali_02;
+  algo_test.dy_eta_a_mini_01 as t1
+  inner join algo_test.dy_eta_a_mini_02 as t2 on (
+    t1.orderId = t2.delivery_id
+    and t1.transporterId = t2.transporter_id
+  );
 
-
-
--- 3 大合并 num=7023858, 后面直接用这个切后面几天来test
-drop table algo_test.dy_eta_a_vali_03;
-create TABLE algo_test.dy_eta_a_vali_03 AS
-select
-  dc.*,
-  udf.get_geo_hash(supp_lng, supp_lat, 7) as s_geohash,  -- 商户geohash，下面是达达的geohash
-  udf.get_geo_hash(lng, lat, 7) as t_geohash,
-  t_info.history_order_num as t_history_order_num,
-  t_info.avg_a1_time as t_avg_a1_time,
-  t_info.avg_a2_time as t_avg_a2_time,
-  s_info.history_order_num as s_history_order_num,
-  s_info.avg_a1_time as s_avg_a1_time,
-  s_info.avg_a2_time as s_avg_a2_time,
-  B.cargo_weight
---   W.rain_fall,
---   W.air_temperature,
---   W.wind_power
-from
-  algo_test.dy_eta_a_vali_02 as dc
-  inner join algo_test.dy_transporter_history_delivery_city0_filter as t_info on dc.transporter_id = t_info.transporter_id
-  and dc.city_id = t_info.city_id
-  inner join algo_test.dy_supplier_history_delivery_city0_filter as s_info on dc.supplier_id = s_info.supplier_id
-  and dc.city_id = s_info.city_id
-  inner join bi_dw.dw_tsp_order as B on dc.delivery_id = B.order_id;
-  --inner join bi_dw.dw_tsp_log_order_weather as W on dc.delivery_id = W.order_id;
-
-select count(*) as c3, count(distinct delivery_id) as cd3
-from algo_test.dy_eta_a_vali_03; --5825003

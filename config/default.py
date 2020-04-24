@@ -7,6 +7,7 @@ TRAIN_LIMIT_NUM = -1
 ################ A ################
 # 训练样本存储位置
 DATA_A_TRAIN_PATH = '/data/dengyang/projects/dataFromEsql/eta_a_0315to0322_at0401.csv'
+DATA_A_TRAIN_PATH = '/data/dengyang/projects/dataFromEsql/eta_a_0402to0408_at0424.csv'
 
 # validation样本存储位置
 DATA_A_VALI_PATH = '/data/dengyang/projects/dataFromEsql/eta_a_0323to0325_at0401.csv'
@@ -18,6 +19,7 @@ DATA_A_VALI_PATH = '/data/dengyang/projects/dataFromEsql/eta_a_0421to0423_at0423
 ################ C ################
 # 训练样本存储位置
 DATA_C_TRAIN_PATH = "/data/dengyang/projects/dataFromEsql/eta_c_0301to0315_at0319.csv"  # 157的路径
+DATA_C_TRAIN_PATH = "/data/dengyang/projects/dataFromEsql/eta_c_0320to0405_at0424.csv"
 
 # validation样本存储位置
 DATA_C_VALI_PATH = "/data/dengyang/projects/dataFromEsql/eta_c_0316to0319_at0319.csv"  # 157的路径
