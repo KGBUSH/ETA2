@@ -26,3 +26,4 @@ DATA_C_VALI_PATH = "/data/dengyang/projects/dataFromEsql/eta_c_0316to0319_at0319
 DATA_C_VALI_PATH = "/data/dengyang/projects/dataFromEsql/eta_c_0320to0323_at0323.csv"  # 157的路径
 DATA_C_VALI_PATH = '/data/dengyang/projects/dataFromEsql/eta_c_0323to0325_at0325.csv'
 DATA_C_VALI_PATH = '/data/dengyang/projects/dataFromEsql/eta_c_0403to0404_at0407.csv'
+DATA_C_VALI_PATH = '/data/dengyang/projects/dataFromEsql/eta_c_0421to0423_at0426.csv'
