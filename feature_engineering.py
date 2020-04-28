@@ -461,7 +461,9 @@ class FeatureExtractorETAa(FeatureExtractor):
     default_dada_speed = dada_speed_map.get(0, 4.5)
 
     def __init__(self):
-        FeatureExtractor.__init__(self)
+        # FeatureExtractor.__init__(self)
+        super(FeatureExtractorETAa, self).__init__()
+
         self.need_norm = False
         self.label_choose_a1 = 'a1_time'
         self.label_choose_a2 = 'a2_time'

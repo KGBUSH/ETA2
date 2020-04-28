@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 
 """
-整个文件一起inference
+
+整个文件一起inference， (主要是比一条条做速度快很多)
 用新数据（by collect_validation_data.sql）验证模型精度
 
 通过全局变量传入 SHORT_DISTANCE，测试短距离的精度
